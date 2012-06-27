@@ -11,6 +11,10 @@ import javafx.scene.Parent;
  * @author boxcat
  */
 public class MemoryView {
+    private final int height;
+    private final int width;
+    private final int wEden;
+    private final int wSrv;
 
     /**
      * Factory method to return the parent node for our memory grid.
@@ -25,8 +29,11 @@ public class MemoryView {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-    public MemoryView(int HEIGHT, int WIDTH, int WIDTH_EDEN, int WIDTH_SRV) {
-        throw new UnsupportedOperationException("Not yet implemented");
+    public MemoryView(int height_, int width_, int wEden_, int wSrv_) {
+        height = height_;
+        width = width_;
+        wEden = wEden_;
+        wSrv = wSrv_;
     }
     
 }
