@@ -4,7 +4,7 @@
  */
 package com.jclarity.anim.memory;
 
-import javafx.scene.Parent;
+import javafx.scene.Group;
 
 /**
  *
@@ -17,7 +17,7 @@ public class MemoryView {
     private final int wSrv;
 
     /**
-     * Factory method to return the parent node for our memory grid.
+     * Method which will take the root of the stage and build out the memory component
      * 
      * @param HEIGHT
      * @param WIDTH
@@ -25,8 +25,9 @@ public class MemoryView {
      * @param WIDTH_SRV
      * @return 
      */
-    public Parent createParent(){ 
-        throw new UnsupportedOperationException("Not yet implemented");
+    public void addComponent(Group group){ 
+        //throw new UnsupportedOperationException("Not yet implemented");
+        System.out.println("Ready to add to group");
     }
 
     public MemoryView(int height_, int width_, int wEden_, int wSrv_) {

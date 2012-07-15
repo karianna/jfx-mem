@@ -6,8 +6,11 @@ package com.jclarity.anim.memory;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.SceneBuilder;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 /**
@@ -34,10 +37,16 @@ public class MemoryMain extends Application {
         
         MemoryController mc = new MemoryController(mm, mv);
        
-        Parent root = mv.createParent();
-        
-        Scene scene = new Scene(root);
+        Group root = new Group();
+        Scene scene = new Scene(root, 300, 300, Color.WHEAT);
         scene.getStylesheets().add(getClass().getResource("Memory.css").toExternalForm());
+        
+        //Hand over the root to the view so it can build itself
+        mv.addComponent(root);
+        
+        //Here we need to bind elements of the view to the model, so as we update the model
+        //the state is reflected in the UI. Maybe do this via the controller
+        
         stage.setScene(scene);
         stage.show();
     }
