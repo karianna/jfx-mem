@@ -31,23 +31,13 @@ public class MemoryMain extends Application {
     }
     
     @Override
-    public void start(Stage stage) throws Exception {
-        MemoryView mv = new MemoryView(HEIGHT, WIDTH, WIDTH_EDEN, WIDTH_SRV);
-        MemoryModel mm = new MemoryModel(HEIGHT, WIDTH, WIDTH_EDEN, WIDTH_SRV);
+    public void start(Stage stage) throws Exception {   
+        Parent root = FXMLLoader.load(getClass().getResource("MemoryMainView.fxml"));
         
-        MemoryController mc = new MemoryController(mm, mv);
-       
-        Group root = new Group();
-        Scene scene = new Scene(root, 300, 300, Color.WHEAT);
+        Scene scene = new Scene(root, 600, 500);
         scene.getStylesheets().add(getClass().getResource("Memory.css").toExternalForm());
-        
-        //Hand over the root to the view so it can build itself
-        mv.addComponent(root);
-        
-        //Here we need to bind elements of the view to the model, so as we update the model
-        //the state is reflected in the UI. Maybe do this via the controller
-        
         stage.setScene(scene);
+        stage.setTitle("JavaFX Memory Visualizer");
         stage.show();
     }
 }

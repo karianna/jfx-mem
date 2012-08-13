@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.collections.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.jclarity.anim.memory.MemoryController">
+    <Label text="Memory Demo" fx:id="applicationtitle" />
+    <HBox>
+        <ComboBox  fx:id="resourceType">
+            <items>
+                <FXCollections fx:factory="observableArrayList">
+                    <String fx:value="File" />
+                </FXCollections>
+            </items>
+        </ComboBox>
+        <Label text="Path:" />
+        <TextField fx:id="resourcePath" />
+    </HBox>
+    <VBox>
+        <GridPane>
+            <Label text="Setup Simulation"  />
+            <VBox GridPane.rowIndex="1">
+                <HBox>
+                    <Label text="Eden Size:" />
+                    <TextField fx:id="edenSize" />
+                </HBox>
+                <HBox>
+                    <Label text="Survivor 1 Size:" />
+                    <TextField fx:id="survivorOneSize" />
+                </HBox>
+                <HBox>
+                    <Label text="Survivor 2 Size:" />
+                    <TextField fx:id="survivorTwoSize" />
+                </HBox>
+                <HBox>
+                    <Label text="Tenured Size:" />
+                    <TextField fx:id="tenuredSize" />
+                </HBox>
+            </VBox>
+            <VBox GridPane.rowIndex="1" GridPane.columnIndex="2">
+                <Button text="Begin" onAction="#beginSimulation" fx:id="beginButton" />
+            </VBox>
+        </GridPane>
+     </VBox>   
+</VBox>
