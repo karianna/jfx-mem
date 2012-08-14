@@ -18,13 +18,15 @@ public class MemoryInterpreterFileLoader implements IMemoryInterpreter {
     }
 
     @Override
-    public void getNextStep(MemoryModel memoryModel) {
+    public MemoryInstruction getNextStep() {
         //1. Process next step in the file
         
         //2. Add to the model
         
         //Model will do the validation of the add and move the memory around
         //From generation to generation as appropriate
+        
+        return null;
     }
     
 }
