@@ -24,16 +24,13 @@ public class MemoryController implements Initializable {
     private IMemoryInterpreter memoryInterpreter;
     
     @FXML
-    private TextField edenSize;
+    private ComboBox edenColumnsCombo;
     
     @FXML
-    private TextField survivorOneSize;
+    private ComboBox survivorColumnsCombo;
     
     @FXML
-    private TextField survivorTwoSize;
-    
-    @FXML
-    private TextField tenuredSize;
+    private ComboBox tenuredColumnsCombo;
     
     @FXML
     private TextField resourcePath;
@@ -47,18 +44,23 @@ public class MemoryController implements Initializable {
     @FXML
     private void beginSimulation() {
         System.out.println("Begin Simulation");
-        System.out.println("Eden Size Requested: " + edenSize.getText());
-        System.out.println("Survivor One Size Requested: " + survivorOneSize.getText());
-        System.out.println("Survivor Two Size Requested: " + survivorTwoSize.getText());
-        System.out.println("Tenured Size Requested: " + tenuredSize.getText());
+        System.out.println("Eden Size Requested: " + edenColumnsCombo.getSelectionModel().getSelectedItem());
+        System.out.println("Survivor Size Requested: " + survivorColumnsCombo.getSelectionModel().getSelectedItem());
+        System.out.println("Tenured Size Requested: " + tenuredColumnsCombo.getSelectionModel().getSelectedItem());
+        System.out.println("File Path: " + resourcePath.getText());
         
         switch(resourceType.getSelectionModel().getSelectedItem().toString()) {
             case "File" :  memoryInterpreter = new MemoryInterpreterFileLoader(resourcePath.getText());
                 break;
         }
         
-        // FIXME
-        model = new MemoryModel(1, 2, 3);
+
+        //FIXME - This shouldn't need to do a cast as selection model has a generic type. Figure this out in FXML
+        Integer edenColumns = (Integer) edenColumnsCombo.getSelectionModel().getSelectedItem();
+        Integer survivorColumns = (Integer) survivorColumnsCombo.getSelectionModel().getSelectedItem();
+        Integer tenuredColumns = (Integer) tenuredColumnsCombo.getSelectionModel().getSelectedItem();
+        
+        model = new MemoryModel(edenColumns, survivorColumns, tenuredColumns);
         
         beginButton.setDisable(true);
         
@@ -85,6 +87,9 @@ public class MemoryController implements Initializable {
     
     @Override
     public void initialize(URL arg0, ResourceBundle arg1) {
-        
+        resourceType.getSelectionModel().selectFirst();
+        edenColumnsCombo.getSelectionModel().selectFirst();
+        survivorColumnsCombo.getSelectionModel().selectFirst();
+        tenuredColumnsCombo.getSelectionModel().selectFirst();
     }    
 }
