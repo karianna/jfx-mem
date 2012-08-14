@@ -75,6 +75,10 @@ public class MemoryController implements Initializable {
                     model.allocate();
                     // FIXME Do we need to update the model manually?
                     break;
+                case KILL:
+                    // FIXME ins.getParam()
+                    model.destroy(0);
+                    break;
                 case EOF: 
                     break INTERP;
                 default: // Shouldn't happen 

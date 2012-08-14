@@ -27,6 +27,8 @@ public class MemoryModel {
     
     private int tenuringThreshold = 4;
     
+    private MemoryBlock.MemoryBlockFactory factory = MemoryBlock.MemoryBlockFactory.getInstance();
+    
     public MemoryModel(int wEden_, int wSrv_, int wOld_) {
         wEden = wEden_;
         wSrv = wSrv_;
@@ -44,16 +46,21 @@ public class MemoryModel {
      */
     void allocate() {
         edenLock.lock();
-        
-        if (canAlocate()) {
-            
-        } else {
-            youngCollection();
+        try {
+            if (canAlocate()) {
+                
+            } else {
+                youngCollection();
+            }
+        } finally {
+            edenLock.unlock();
         }
-        
-        edenLock.unlock();
     }
 
+    void destroy(int id) {
+        // FIXME
+    }
+    
     private boolean canAlocate() {
         return true;
     }
