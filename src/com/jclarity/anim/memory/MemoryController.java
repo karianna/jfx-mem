@@ -27,10 +27,7 @@ public class MemoryController implements Initializable {
     private TextField edenSize;
     
     @FXML
-    private TextField survivorOneSize;
-    
-    @FXML
-    private TextField survivorTwoSize;
+    private TextField survivorSize;
     
     @FXML
     private TextField tenuredSize;
@@ -48,8 +45,7 @@ public class MemoryController implements Initializable {
     private void beginSimulation() {
         System.out.println("Begin Simulation");
         System.out.println("Eden Size Requested: " + edenSize.getText());
-        System.out.println("Survivor One Size Requested: " + survivorOneSize.getText());
-        System.out.println("Survivor Two Size Requested: " + survivorTwoSize.getText());
+        System.out.println("Survivor One Size Requested: " + survivorSize.getText());
         System.out.println("Tenured Size Requested: " + tenuredSize.getText());
         
         switch(resourceType.getSelectionModel().getSelectedItem().toString()) {
@@ -66,6 +62,6 @@ public class MemoryController implements Initializable {
     
     @Override
     public void initialize(URL arg0, ResourceBundle arg1) {
-        
+        resourceType.getSelectionModel().selectFirst();
     }    
 }

@@ -28,12 +28,8 @@
                     <TextField fx:id="edenSize" />
                 </HBox>
                 <HBox>
-                    <Label text="Survivor 1 Size:" />
-                    <TextField fx:id="survivorOneSize" />
-                </HBox>
-                <HBox>
-                    <Label text="Survivor 2 Size:" />
-                    <TextField fx:id="survivorTwoSize" />
+                    <Label text="Survivor Size:" />
+                    <TextField fx:id="survivorSize" />
                 </HBox>
                 <HBox>
                     <Label text="Tenured Size:" />
