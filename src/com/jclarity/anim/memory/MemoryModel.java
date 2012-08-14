@@ -1,5 +1,8 @@
 package com.jclarity.anim.memory;
 
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 
 /**
  * This class implements a simple memory model, with a fixed number of rows
@@ -20,6 +23,8 @@ public class MemoryModel {
     private final MemoryBlock[][] s2;
     private final MemoryBlock[][] tenured;
     
+    private final Lock edenLock = new ReentrantLock();
+    
     private int tenuringThreshold = 4;
     
     public MemoryModel(int wEden_, int wSrv_, int wOld_) {
@@ -31,6 +36,30 @@ public class MemoryModel {
         s1 = new MemoryBlock[wSrv][height];
         s2 = new MemoryBlock[wSrv][height];
         tenured = new MemoryBlock[wOld][height];
+    }
+
+    /**
+     * This method allocates a new block in Eden
+     * 
+     */
+    void allocate() {
+        edenLock.lock();
+        
+        if (canAlocate()) {
+            
+        } else {
+            youngCollection();
+        }
+        
+        edenLock.unlock();
+    }
+
+    private boolean canAlocate() {
+        return true;
+    }
+
+    private void youngCollection() {
+        // fixme
     }
 
     

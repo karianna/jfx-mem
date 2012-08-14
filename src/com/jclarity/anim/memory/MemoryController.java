@@ -54,6 +54,7 @@ public class MemoryController implements Initializable {
                 break;
         }
         
+
         //FIXME - This shouldn't need to do a cast as selection model has a generic type. Figure this out in FXML
         Integer edenColumns = (Integer) edenColumnsCombo.getSelectionModel().getSelectedItem();
         Integer survivorColumns = (Integer) survivorColumnsCombo.getSelectionModel().getSelectedItem();
@@ -64,6 +65,24 @@ public class MemoryController implements Initializable {
         beginButton.setDisable(true);
         
         //TODO Kick off simulation loop to poll get next and update view
+        MemoryInstruction ins = memoryInterpreter.getNextStep();
+        INTERP: while (ins != null) {
+            switch (ins.getOp()) {
+                case NOP: 
+                    break;
+                case ALLOC:
+                case LARGE_ALLOC: 
+                    model.allocate();
+                    // FIXME Do we need to update the model manually?
+                    break;
+                case EOF: 
+                    break INTERP;
+                default: // Shouldn't happen 
+                    break INTERP; 
+            }
+            ins = memoryInterpreter.getNextStep();
+        }
+        
     }
     
     @Override
