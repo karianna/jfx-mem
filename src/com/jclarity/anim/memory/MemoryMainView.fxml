@@ -25,19 +25,39 @@
             <VBox GridPane.rowIndex="1">
                 <HBox>
                     <Label text="Eden Size:" />
-                    <TextField fx:id="edenSize" />
+                    <ComboBox  fx:id="edenColumnsCombo">
+                        <items>
+                            <FXCollections fx:factory="observableArrayList">
+                                <Integer fx:value="4" />
+                                <Integer fx:value="5" />
+                                <Integer fx:value="6" />
+                            </FXCollections>
+                        </items>
+                    </ComboBox>
                 </HBox>
                 <HBox>
-                    <Label text="Survivor 1 Size:" />
-                    <TextField fx:id="survivorOneSize" />
-                </HBox>
-                <HBox>
-                    <Label text="Survivor 2 Size:" />
-                    <TextField fx:id="survivorTwoSize" />
+                    <Label text="Survivor Size:" />
+                    <ComboBox  fx:id="survivorColumnsCombo">
+                        <items>
+                            <FXCollections fx:factory="observableArrayList">
+                                <Integer fx:value="4" />
+                                <Integer fx:value="5" />
+                                <Integer fx:value="6" />
+                            </FXCollections>
+                        </items>
+                    </ComboBox>
                 </HBox>
                 <HBox>
                     <Label text="Tenured Size:" />
-                    <TextField fx:id="tenuredSize" />
+                    <ComboBox  fx:id="tenuredColumnsCombo">
+                        <items>
+                            <FXCollections fx:factory="observableArrayList">
+                                <Integer fx:value="4" />
+                                <Integer fx:value="5" />
+                                <Integer fx:value="6" />
+                            </FXCollections>
+                        </items>
+                    </ComboBox>
                 </HBox>
             </VBox>
             <VBox GridPane.rowIndex="1" GridPane.columnIndex="2">
