@@ -1,5 +1,7 @@
 package com.jclarity.anim.memory;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -23,11 +25,17 @@ public class MemoryModel {
     private final MemoryBlock[][] s2;
     private final MemoryBlock[][] tenured;
     
+    private final ConcurrentMap<Integer, Integer> threadToCurrentTLAB = new ConcurrentHashMap<>();
+    
     private final Lock edenLock = new ReentrantLock();
     
-    private int tenuringThreshold = 4;
+    private static final int TENURING_THRESHOLD = 4;
+    
+    private static final int RUN_LENGTH = 200;
     
     private MemoryBlock.MemoryBlockFactory factory = MemoryBlock.MemoryBlockFactory.getInstance();
+    
+    private final MemoryBlock[] allocList;
     
     public MemoryModel(int wEden_, int wSrv_, int wOld_) {
         wEden = wEden_;
@@ -38,6 +46,10 @@ public class MemoryModel {
         s1 = new MemoryBlock[wSrv][height];
         s2 = new MemoryBlock[wSrv][height];
         tenured = new MemoryBlock[wOld][height];
+        
+        int nblocks = height * (wEden * + 2 * wSrv + wOld);
+        
+        allocList = new MemoryBlock[nblocks * RUN_LENGTH];
     }
 
     /**
@@ -48,7 +60,8 @@ public class MemoryModel {
         edenLock.lock();
         try {
             if (canAlocate()) {
-                
+               MemoryBlock mb = factory.getBlock();
+               allocList[mb.getId()] = mb;
             } else {
                 youngCollection();
             }
@@ -61,12 +74,45 @@ public class MemoryModel {
         // FIXME
     }
     
+    /**
+     * Determine if we can allocate a new block
+     * @return 
+     */
     private boolean canAlocate() {
-        return true;
+        if (currentTLABCanAllocate())
+            return true;
+        else if (canAllocateNewTLAB()) {
+            setupNewTLAB();
+            // FIXME - allocate zeroth element of new TLAB
+            // Integer nextRow = threadToCurrentTLAB.get(incoming);
+            // eden[nextRow][0]
+            return true;
+        } 
+            
+        
+        return false;
     }
 
     private void youngCollection() {
-        // fixme
+        // FIXME What we need to do is to step through the allocation list
+        // and retire everything which is dead. 
+        //
+        // and also handle promotion. :)
+        
+        
+    }
+
+    private boolean currentTLABCanAllocate() {
+        // FIXME - This is bullshit.
+        return true;
+    }
+
+    private boolean canAllocateNewTLAB() {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    private void setupNewTLAB() {
+        throw new UnsupportedOperationException("Not yet implemented");
     }
 
     

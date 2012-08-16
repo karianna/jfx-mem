@@ -26,6 +26,8 @@ public class MemoryBlock {
     
     public boolean isAlive() { return alive; }
     
+    public int getId() { return id; } 
+    
     /**
      * Helper factory to ensure the properties of the MemoryBlock are OK.
      */

@@ -50,7 +50,9 @@ public class MemoryController implements Initializable {
         System.out.println("File Path: " + resourcePath.getText());
         
         switch(resourceType.getSelectionModel().getSelectedItem().toString()) {
-            case "File" :  memoryInterpreter = new MemoryInterpreterFileLoader(resourcePath.getText());
+            case "File" :  
+                // memoryInterpreter = new MemoryInterpreterFileLoader(resourcePath.getText());
+                memoryInterpreter = new MemoryPatternMaker();
                 break;
         }
         
