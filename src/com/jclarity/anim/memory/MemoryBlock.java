@@ -37,7 +37,7 @@ public class MemoryBlock extends Region {
         styleProperty().bind(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.FREE))
                 .then("-fx-background-color: radial-gradient(radius 100%, white .1, gray .9, darkgray 1)")
                 .otherwise(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.ALLOCATED))
-                .then("-fx-background-color: radial-gradient(radius 100%, white .4, gray .9, darkgray 1)")
+                .then("-fx-background-color: radial-gradient(radius 100%, blue .4, gray .9, darkgray 1)")
                 .otherwise(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.DEAD))
                 .then("-fx-background-colour: radial-gradient(radius 100%, white 0, black .6")
                 .otherwise("")

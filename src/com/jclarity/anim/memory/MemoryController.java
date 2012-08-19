@@ -6,6 +6,7 @@ package com.jclarity.anim.memory;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+import javafx.beans.property.ObjectProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -13,7 +14,6 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.PaneBuilder;
-import javafx.scene.layout.StackPaneBuilder;
 
 /**
  *
@@ -25,6 +25,8 @@ public class MemoryController implements Initializable {
     //Probably not needed as we will update by bindings
     //private MemoryView view;
     private IMemoryInterpreter memoryInterpreter;
+    
+    private int height = 8;
     
     @FXML
     private ComboBox edenColumnsCombo;
@@ -46,6 +48,15 @@ public class MemoryController implements Initializable {
     
     @FXML
     private GridPane edenGridPane;
+    
+    @FXML
+    private GridPane s1GridPane;
+    
+    @FXML
+    private GridPane s2GridPane;
+    
+    @FXML
+    private GridPane tenuredGridPane;
 
     @FXML
     private void beginSimulation() {
@@ -68,25 +79,18 @@ public class MemoryController implements Initializable {
         Integer survivorColumns = (Integer) survivorColumnsCombo.getSelectionModel().getSelectedItem();
         Integer tenuredColumns = (Integer) tenuredColumnsCombo.getSelectionModel().getSelectedItem();
         
-        model = new MemoryModel(edenColumns, survivorColumns, tenuredColumns);
+        model = new MemoryModel(edenColumns, survivorColumns, tenuredColumns, height);
         
-        //Eden setup on the board TODO move height somewhere consistent
-        for(int i=0; i < edenColumns; i++) {
-            for(int j=0; j < 8; j++) {
-                System.out.println("Build a block");
-                MemoryBlock block = model.getEden()[i][j].get();
-                System.out.println( block.getStatus() );
-                System.out.println( block.getStyle());
-                System.out.println( "H: " +  block.getHeight());
-                System.out.println( "W: " + block.getWidth());
-                edenGridPane.add(PaneBuilder.create().children(block).build(), i, j);
-            }
-        }
-
-
-        System.out.println("Finish mem construction");
+        //Eden setup on the board 
+        initialiseMemoryView(model.getEden(), edenColumns, edenGridPane);
+        initialiseMemoryView(model.getS1(), survivorColumns, s1GridPane);
+        initialiseMemoryView(model.getS2(), survivorColumns, s2GridPane);
+        initialiseMemoryView(model.getTenured(), tenuredColumns, tenuredGridPane);
         
         beginButton.setDisable(true);
+        
+        //Test allocation
+        model.getEden()[0][0].get().setMemoryStatus(MemoryStatus.ALLOCATED);
   
         //FIXME - reintroduce this code after we have some blocks on screen
         
@@ -113,6 +117,16 @@ public class MemoryController implements Initializable {
 //            ins = memoryInterpreter.getNextStep();
 //        }
         
+    }
+    
+    private void initialiseMemoryView(ObjectProperty<MemoryBlock>[][] modelArray, int columns, GridPane gridPane) {
+               //Eden setup on the board 
+        for(int i=0; i < columns; i++) {
+            for(int j=0; j < height; j++) {
+                MemoryBlock block = modelArray[i][j].get();
+                gridPane.add(PaneBuilder.create().children(block).build(), i, j);
+            }
+        } 
     }
     
     @Override

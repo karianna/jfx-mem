@@ -16,7 +16,6 @@ import javafx.beans.property.SimpleObjectProperty;
  */
 public class MemoryModel {
 
-    private final int height = 8;
     private final int wEden;
     private final int wSrv;
     private final int wOld;
@@ -42,31 +41,44 @@ public class MemoryModel {
     public ObjectProperty<MemoryBlock>[][] getEden() {
         return eden;
     }
+
+    public ObjectProperty<MemoryBlock>[][] getS1() {
+        return s1;
+    }    
     
-    public MemoryModel(int wEden_, int wSrv_, int wOld_) {
+    public ObjectProperty<MemoryBlock>[][] getS2() {
+        return s2;
+    }
+        
+    
+    public ObjectProperty<MemoryBlock>[][] getTenured() {
+        return tenured;
+    }
+    
+    public MemoryModel(int wEden_, int wSrv_, int wOld_, int height) {
         wEden = wEden_;
         wSrv = wSrv_;
         wOld = wOld_;
-        
-        eden = new ObjectProperty[wEden][height];
-        
-        //Initialise Eden
-        System.out.println("Init Eden");
-        for(int i =0; i < wEden; i++) {
-            for(int j = 0; j < height; j++) {
-                eden[i][j] = new SimpleObjectProperty<>();
-                eden[i][j].set(new MemoryBlock());
-            }
-        }
-        System.out.println("Finish Eden Init");
-        
-        s1 = new ObjectProperty[wSrv][height];
-        s2 = new ObjectProperty[wSrv][height];
-        tenured = new ObjectProperty[wOld][height];
+
+        eden = createMemoryBlockModel(wEden, height);
+        s1 = createMemoryBlockModel(wSrv, height);
+        s2 = createMemoryBlockModel(wSrv, height);
+        tenured = createMemoryBlockModel(wOld, height);
         
         int nblocks = height * (wEden * + 2 * wSrv + wOld);
         
         allocList = new MemoryBlock[nblocks * RUN_LENGTH];
+    }
+    
+    private ObjectProperty[][] createMemoryBlockModel(int width, int height) {
+       ObjectProperty[][] modelArray = new ObjectProperty[width][height];
+       for(int i =0; i < width; i++) {
+            for(int j = 0; j < height; j++) {
+                modelArray[i][j] = new SimpleObjectProperty<>();
+                modelArray[i][j].set(new MemoryBlock());
+            }
+        } 
+       return modelArray;
     }
 
     /**
