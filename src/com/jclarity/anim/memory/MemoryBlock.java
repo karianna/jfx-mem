@@ -42,6 +42,9 @@ public class MemoryBlock extends Region {
                 .then("-fx-background-colour: radial-gradient(radius 100%, white 0, black .6")
                 .otherwise("")
                 .concat("; -fx-background-radius: 1000em; -fx-background-insets: 5"))));
+        
+        setHeight(20);
+        setWidth(20);
     }
     
     void die() {

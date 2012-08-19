@@ -39,6 +39,10 @@ public class MemoryModel {
     
     private final MemoryBlock[] allocList;
     
+    public ObjectProperty<MemoryBlock>[][] getEden() {
+        return eden;
+    }
+    
     public MemoryModel(int wEden_, int wSrv_, int wOld_) {
         wEden = wEden_;
         wSrv = wSrv_;
@@ -47,11 +51,14 @@ public class MemoryModel {
         eden = new ObjectProperty[wEden][height];
         
         //Initialise Eden
+        System.out.println("Init Eden");
         for(int i =0; i < wEden; i++) {
             for(int j = 0; j < height; j++) {
                 eden[i][j] = new SimpleObjectProperty<>();
+                eden[i][j].set(new MemoryBlock());
             }
         }
+        System.out.println("Finish Eden Init");
         
         s1 = new ObjectProperty[wSrv][height];
         s2 = new ObjectProperty[wSrv][height];
