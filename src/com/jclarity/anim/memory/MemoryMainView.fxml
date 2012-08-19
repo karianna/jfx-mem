@@ -5,6 +5,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.collections.*?>
+<?import javafx.geometry.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.jclarity.anim.memory.MemoryController">
     <Label text="Memory Demo" fx:id="applicationtitle" />
@@ -65,4 +66,33 @@
             </VBox>
         </GridPane>
      </VBox>   
+     <HBox>
+         <GridPane fx:id="edenGridPane" alignment="center" hgap="10" vgap="10" 
+                   prefHeight="372.0" prefWidth="572.0" 
+                   GridPane.vgrow="always" GridPane.hgrow="always" >
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+        </GridPane>
+        <GridPane fx:id="s1GridPane" alignment="center" hgap="10" vgap="10" 
+                   prefHeight="372.0" prefWidth="572.0" 
+                   GridPane.vgrow="always" GridPane.hgrow="always" >
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+        </GridPane>
+        <GridPane fx:id="s2GridPane" alignment="center" hgap="10" vgap="10" 
+                   prefHeight="372.0" prefWidth="572.0" 
+                   GridPane.vgrow="always" GridPane.hgrow="always" >
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+        </GridPane><GridPane fx:id="tenuredGridPane" alignment="center" hgap="10" vgap="10" 
+                   prefHeight="372.0" prefWidth="572.0" 
+                   GridPane.vgrow="always" GridPane.hgrow="always" >
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+        </GridPane>
+     </HBox>
 </VBox>

@@ -4,6 +4,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 
 
 /**
@@ -14,16 +16,15 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class MemoryModel {
 
-    private final int height = 8;
     private final int wEden;
     private final int wSrv;
     private final int wOld;
 
     
-    private final MemoryBlock[][] eden;
-    private final MemoryBlock[][] s1;
-    private final MemoryBlock[][] s2;
-    private final MemoryBlock[][] tenured;
+    private final ObjectProperty<MemoryBlock>[][] eden;
+    private final ObjectProperty<MemoryBlock>[][] s1;
+    private final ObjectProperty<MemoryBlock>[][] s2;
+    private final ObjectProperty<MemoryBlock>[][] tenured;
     
     private final ConcurrentMap<Integer, Integer> threadToCurrentTLAB = new ConcurrentHashMap<>();
     
@@ -37,19 +38,47 @@ public class MemoryModel {
     
     private final MemoryBlock[] allocList;
     
-    public MemoryModel(int wEden_, int wSrv_, int wOld_) {
+    public ObjectProperty<MemoryBlock>[][] getEden() {
+        return eden;
+    }
+
+    public ObjectProperty<MemoryBlock>[][] getS1() {
+        return s1;
+    }    
+    
+    public ObjectProperty<MemoryBlock>[][] getS2() {
+        return s2;
+    }
+        
+    
+    public ObjectProperty<MemoryBlock>[][] getTenured() {
+        return tenured;
+    }
+    
+    public MemoryModel(int wEden_, int wSrv_, int wOld_, int height) {
         wEden = wEden_;
         wSrv = wSrv_;
         wOld = wOld_;
-        
-        eden = new MemoryBlock[wEden][height];
-        s1 = new MemoryBlock[wSrv][height];
-        s2 = new MemoryBlock[wSrv][height];
-        tenured = new MemoryBlock[wOld][height];
+
+        eden = createMemoryBlockModel(wEden, height);
+        s1 = createMemoryBlockModel(wSrv, height);
+        s2 = createMemoryBlockModel(wSrv, height);
+        tenured = createMemoryBlockModel(wOld, height);
         
         int nblocks = height * (wEden * + 2 * wSrv + wOld);
         
         allocList = new MemoryBlock[nblocks * RUN_LENGTH];
+    }
+    
+    private ObjectProperty[][] createMemoryBlockModel(int width, int height) {
+       ObjectProperty[][] modelArray = new ObjectProperty[width][height];
+       for(int i =0; i < width; i++) {
+            for(int j = 0; j < height; j++) {
+                modelArray[i][j] = new SimpleObjectProperty<>();
+                modelArray[i][j].set(new MemoryBlock());
+            }
+        } 
+       return modelArray;
     }
 
     /**
@@ -61,7 +90,7 @@ public class MemoryModel {
         try {
             if (canAlocate()) {
                MemoryBlock mb = factory.getBlock();
-               allocList[mb.getId()] = mb;
+               //allocList[mb.getId()] = mb;
             } else {
                 youngCollection();
             }
