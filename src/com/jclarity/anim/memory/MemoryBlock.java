@@ -1,17 +1,47 @@
 package com.jclarity.anim.memory;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.scene.layout.Region;
+
 /**
  *
  * @author kittylyst
  */
-public class MemoryBlock {
+public class MemoryBlock extends Region {
     
-    private final int id;
+   // private final int id;
     private volatile int generation = 0;
     private volatile boolean alive = true;
     
-    private MemoryBlock(int id_) {
-        id = id_;
+    private ObjectProperty<MemoryStatus> memoryStatus;
+    
+    public ObjectProperty<MemoryStatus> memoryStatus() {
+        return memoryStatus;
+    }
+    
+    public MemoryStatus getStatus() {
+        return memoryStatus.get();
+    }
+    
+    public void setMemoryStatus(MemoryStatus status) {
+        memoryStatus.set(status);
+    }
+
+    public MemoryBlock() {
+       // id = id_;
+        memoryStatus = new SimpleObjectProperty<>(this, "owner", 
+                MemoryStatus.FREE);
+
+        styleProperty().bind(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.FREE))
+                .then("-fx-background-color: radial-gradient(radius 100%, white .1, gray .9, darkgray 1)")
+                .otherwise(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.ALLOCATED))
+                .then("-fx-background-color: radial-gradient(radius 100%, white .4, gray .9, darkgray 1)")
+                .otherwise(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.DEAD))
+                .then("-fx-background-colour: radial-gradient(radius 100%, white 0, black .6")
+                .otherwise("")
+                .concat("; -fx-background-radius: 1000em; -fx-background-insets: 5"))));
     }
     
     void die() {
@@ -26,7 +56,7 @@ public class MemoryBlock {
     
     public boolean isAlive() { return alive; }
     
-    public int getId() { return id; } 
+    //public int getId() { return id; } 
     
     /**
      * Helper factory to ensure the properties of the MemoryBlock are OK.
@@ -43,7 +73,8 @@ public class MemoryBlock {
         }
         
         public synchronized MemoryBlock getBlock() {
-            return new MemoryBlock(seq++);
+            return new MemoryBlock();
+            //return new MemoryBlock(seq++);
         } 
         
     }

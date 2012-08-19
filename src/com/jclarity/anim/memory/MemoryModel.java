@@ -4,6 +4,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 
 
 /**
@@ -20,10 +22,10 @@ public class MemoryModel {
     private final int wOld;
 
     
-    private final MemoryBlock[][] eden;
-    private final MemoryBlock[][] s1;
-    private final MemoryBlock[][] s2;
-    private final MemoryBlock[][] tenured;
+    private final ObjectProperty<MemoryBlock>[][] eden;
+    private final ObjectProperty<MemoryBlock>[][] s1;
+    private final ObjectProperty<MemoryBlock>[][] s2;
+    private final ObjectProperty<MemoryBlock>[][] tenured;
     
     private final ConcurrentMap<Integer, Integer> threadToCurrentTLAB = new ConcurrentHashMap<>();
     
@@ -42,10 +44,18 @@ public class MemoryModel {
         wSrv = wSrv_;
         wOld = wOld_;
         
-        eden = new MemoryBlock[wEden][height];
-        s1 = new MemoryBlock[wSrv][height];
-        s2 = new MemoryBlock[wSrv][height];
-        tenured = new MemoryBlock[wOld][height];
+        eden = new ObjectProperty[wEden][height];
+        
+        //Initialise Eden
+        for(int i =0; i < wEden; i++) {
+            for(int j = 0; j < height; j++) {
+                eden[i][j] = new SimpleObjectProperty<>();
+            }
+        }
+        
+        s1 = new ObjectProperty[wSrv][height];
+        s2 = new ObjectProperty[wSrv][height];
+        tenured = new ObjectProperty[wOld][height];
         
         int nblocks = height * (wEden * + 2 * wSrv + wOld);
         
@@ -61,7 +71,7 @@ public class MemoryModel {
         try {
             if (canAlocate()) {
                MemoryBlock mb = factory.getBlock();
-               allocList[mb.getId()] = mb;
+               //allocList[mb.getId()] = mb;
             } else {
                 youngCollection();
             }
