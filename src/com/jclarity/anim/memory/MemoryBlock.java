@@ -43,8 +43,7 @@ public class MemoryBlock extends Region {
                 .otherwise("")
                 .concat("; -fx-background-radius: 1000em; -fx-background-insets: 5"))));
         
-        setHeight(20);
-        setWidth(20);
+        setPrefSize(30, 30);
     }
     
     void die() {
