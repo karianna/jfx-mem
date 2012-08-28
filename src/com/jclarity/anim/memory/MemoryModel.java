@@ -84,12 +84,11 @@ public class MemoryModel {
      */
     void allocate() {
         edenLock.lock();
-        
-        // FIXME Are we even getting to here?
-        eden[0][threadToCurrentTLAB.get(0)].getValue().setMemoryStatus(MemoryStatus.ALLOCATED);
+
         try {
             boolean hasAllocated = false;
             MemoryBlock mb = factory.getBlock();
+            System.out.println(mb.getBlockId());
             allocList[mb.getBlockId()] = mb;
             // FIXME Single allocating thread
             INNER:
@@ -129,6 +128,7 @@ public class MemoryModel {
 
 
     private void youngCollection() {
+        System.out.println("Trying a young collection");
         // FIXME What we need to do is to step through the allocation list
         // and retire everything which is dead. 
         //

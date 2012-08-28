@@ -25,6 +25,8 @@ public class MemoryBlock {
     
     public MemoryBlockView getView() { return view; }
     
+    public void setView(MemoryBlockView view_) { view = view_; }
+    
     void die() {
         memoryStatus = MemoryStatus.DEAD;
         view.die();
@@ -52,6 +54,9 @@ public class MemoryBlock {
             return new MemoryBlock(seq++);
         } 
         
+        public void reset() {
+            seq = 0;
+        }
     }
     
 }
