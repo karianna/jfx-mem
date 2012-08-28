@@ -20,10 +20,10 @@ public class MemoryModel {
     private final int wOld;
     private final int height;
     
-    private final ObjectProperty<MemoryBlock>[][] eden;
-    private final ObjectProperty<MemoryBlock>[][] s1;
-    private final ObjectProperty<MemoryBlock>[][] s2;
-    private final ObjectProperty<MemoryBlock>[][] tenured;
+    private final ObjectProperty<MemoryBlockView>[][] eden;
+    private final ObjectProperty<MemoryBlockView>[][] s1;
+    private final ObjectProperty<MemoryBlockView>[][] s2;
+    private final ObjectProperty<MemoryBlockView>[][] tenured;
     // FIXME We also need to model TLABs
     private final ConcurrentMap<Integer, Integer> threadToCurrentTLAB = new ConcurrentHashMap<>();
     private final Lock edenLock = new ReentrantLock();
@@ -32,19 +32,19 @@ public class MemoryModel {
     private MemoryBlock.MemoryBlockFactory factory = MemoryBlock.MemoryBlockFactory.getInstance();
     private final MemoryBlock[] allocList;
 
-    public ObjectProperty<MemoryBlock>[][] getEden() {
+    public ObjectProperty<MemoryBlockView>[][] getEden() {
         return eden;
     }
 
-    public ObjectProperty<MemoryBlock>[][] getS1() {
+    public ObjectProperty<MemoryBlockView>[][] getS1() {
         return s1;
     }
 
-    public ObjectProperty<MemoryBlock>[][] getS2() {
+    public ObjectProperty<MemoryBlockView>[][] getS2() {
         return s2;
     }
 
-    public ObjectProperty<MemoryBlock>[][] getTenured() {
+    public ObjectProperty<MemoryBlockView>[][] getTenured() {
         return tenured;
     }
 
@@ -67,12 +67,12 @@ public class MemoryModel {
         threadToCurrentTLAB.put(0, 0);
     }
 
-    private ObjectProperty[][] createMemoryBlockModel(int width, int height) {
-        ObjectProperty[][] modelArray = new ObjectProperty[width][height];
+    private ObjectProperty<MemoryBlockView>[][] createMemoryBlockModel(int width, int height) {
+        ObjectProperty<MemoryBlockView>[][] modelArray = new ObjectProperty[width][height];
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 modelArray[i][j] = new SimpleObjectProperty<>();
-                modelArray[i][j].set(factory.getBlock());
+                modelArray[i][j].set(new MemoryBlockView());
             }
         }
         return modelArray;
@@ -96,7 +96,7 @@ public class MemoryModel {
             for (int i = 0; i < wEden; i++) {
                 if (eden[i][threadToCurrentTLAB.get(0)].getValue().getStatus() == MemoryStatus.FREE) {
                     // DANGER WILL ROBINSON DOES JFX LET US DO THIS?
-                    //eden[i][threadToCurrentTLAB.get(0)].setValue(mb);
+                    eden[i][threadToCurrentTLAB.get(0)].getValue().setBlock(mb);
                     hasAllocated = true;
                     break INNER;
                 }

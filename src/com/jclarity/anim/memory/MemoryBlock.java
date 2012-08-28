@@ -1,54 +1,20 @@
 package com.jclarity.anim.memory;
 
-import javafx.beans.binding.Bindings;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.scene.layout.Region;
-
 /**
+ * This is a model class
  *
- * @author kittylyst
  */
-public class MemoryBlock extends Region {
-    
+public class MemoryBlock {
+
     private final int id;
     private volatile int generation = 0;
+    private MemoryBlockView view;
+    private MemoryStatus memoryStatus = MemoryStatus.ALLOCATED;
     
-    private ObjectProperty<MemoryStatus> memoryStatus;
-    
-    public ObjectProperty<MemoryStatus> memoryStatus() {
-        return memoryStatus;
-    }
-    
-    public MemoryStatus getStatus() {
-        return memoryStatus.get();
-    }
-    
-    public void setMemoryStatus(MemoryStatus status) {
-        memoryStatus.set(status);
-    }
-
     private MemoryBlock(int id_) {
         id = id_;
-        memoryStatus = new SimpleObjectProperty<>(this, "owner", 
-                MemoryStatus.FREE);
+    }
 
-        styleProperty().bind(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.FREE))
-                .then("-fx-background-color: radial-gradient(radius 100%, white .1, gray .9, darkgray 1)")
-                .otherwise(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.ALLOCATED))
-                .then("-fx-background-color: radial-gradient(radius 100%, blue .4, gray .9, darkgray 1)")
-                .otherwise(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.DEAD))
-                .then("-fx-background-colour: radial-gradient(radius 100%, white 0, black .6")
-                .otherwise("")
-                .concat("; -fx-background-radius: 1000em; -fx-background-insets: 5"))));
-        
-        setPrefSize(30, 30);
-    }
-    
-    void die() {
-        memoryStatus.setValue(MemoryStatus.DEAD);
-    }
-    
     void collect() {
         generation++;
     }
@@ -57,8 +23,19 @@ public class MemoryBlock extends Region {
     
     public int getBlockId() { return id; } 
     
+    public MemoryBlockView getView() { return view; }
+    
+    void die() {
+        memoryStatus = MemoryStatus.DEAD;
+        view.die();
+    }
+
+    MemoryStatus getStatus() {
+        return memoryStatus;
+    }
+
     /**
-     * Helper factory to ensure the properties of the MemoryBlock are OK.
+     * Helper factory to ensure the properties of the MemoryBlockView are OK.
      */
     public static class MemoryBlockFactory {
         private final static MemoryBlockFactory inst = new MemoryBlockFactory();
@@ -72,7 +49,6 @@ public class MemoryBlock extends Region {
         }
         
         public synchronized MemoryBlock getBlock() {
-//            return new MemoryBlock();
             return new MemoryBlock(seq++);
         } 
         

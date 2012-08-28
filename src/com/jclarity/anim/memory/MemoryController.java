@@ -100,11 +100,11 @@ public class MemoryController implements Initializable {
         srv.submit(at0);
     }
         
-    private void initialiseMemoryView(ObjectProperty<MemoryBlock>[][] modelArray, int columns, GridPane gridPane) {
+    private void initialiseMemoryView(ObjectProperty<MemoryBlockView>[][] modelArray, int columns, GridPane gridPane) {
         // Setup memory region on the board 
         for(int i=0; i < columns; i++) {
             for(int j=0; j < height; j++) {
-                MemoryBlock block = modelArray[i][j].get();
+                MemoryBlockView block = modelArray[i][j].get();
                 gridPane.add(PaneBuilder.create().children(block).build(), i, j);
             }
         } 
