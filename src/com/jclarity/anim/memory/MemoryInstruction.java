@@ -17,6 +17,8 @@ public class MemoryInstruction {
     
     public OpCode getOp() { return op; }
     
+    public int getParam() { return p; }
+    
     // FIXME Currently, this doesn't say which application thread is allocating 
     // the memory....
     

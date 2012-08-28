@@ -6,6 +6,10 @@ package com.jclarity.anim.memory;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.beans.property.ObjectProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -22,11 +26,14 @@ import javafx.scene.layout.PaneBuilder;
 public class MemoryController implements Initializable {
     
     private MemoryModel model;
+    private int height = 8;
+
     //Probably not needed as we will update by bindings
     //private MemoryView view;
+
+    // FIXME Move MemoryInterpreter to an AllocatingThread factory
     private IMemoryInterpreter memoryInterpreter;
-    
-    private int height = 8;
+    private final ExecutorService srv = Executors.newScheduledThreadPool(2);
     
     @FXML
     private ComboBox edenColumnsCombo;
@@ -66,14 +73,7 @@ public class MemoryController implements Initializable {
         System.out.println("Tenured Size Requested: " + tenuredColumnsCombo.getSelectionModel().getSelectedItem());
         System.out.println("File Path: " + resourcePath.getText());
         
-        switch(resourceType.getSelectionModel().getSelectedItem().toString()) {
-            case "File" :  
-                // memoryInterpreter = new MemoryInterpreterFileLoader(resourcePath.getText());
-                memoryInterpreter = new MemoryPatternMaker();
-                break;
-        }
         
-
         //FIXME - This shouldn't need to do a cast as selection model has a generic type. Figure this out in FXML
         Integer edenColumns = (Integer) edenColumnsCombo.getSelectionModel().getSelectedItem();
         Integer survivorColumns = (Integer) survivorColumnsCombo.getSelectionModel().getSelectedItem();
@@ -89,38 +89,19 @@ public class MemoryController implements Initializable {
         
         beginButton.setDisable(true);
         
-        //Test allocation
-        model.getEden()[0][0].get().setMemoryStatus(MemoryStatus.ALLOCATED);
-  
-        //FIXME - reintroduce this code after we have some blocks on screen
-        
-        //TODO Kick off simulation loop to poll get next and update view
-//        MemoryInstruction ins = memoryInterpreter.getNextStep();
-//        INTERP: while (ins != null) {
-//            switch (ins.getOp()) {
-//                case NOP: 
-//                    break;
-//                case ALLOC:
-//                case LARGE_ALLOC: 
-//                    model.allocate();
-//                    // FIXME Do we need to update the model manually?
-//                    break;
-//                case KILL:
-//                    // FIXME ins.getParam()
-//                    model.destroy(0);
-//                    break;
-//                case EOF: 
-//                    break INTERP;
-//                default: // Shouldn't happen 
-//                    break INTERP; 
-//            }
-//            ins = memoryInterpreter.getNextStep();
-//        }
-        
+        // FIXME needs some refactoring
+        switch(resourceType.getSelectionModel().getSelectedItem().toString()) {
+            case "File" :  
+                // memoryInterpreter = new MemoryInterpreterFileLoader(resourcePath.getText());
+                memoryInterpreter = new MemoryPatternMaker();
+                break;
+        }
+        AllocatingThread at0 = new AllocatingThread(memoryInterpreter, model);
+        srv.submit(at0);
     }
-    
+        
     private void initialiseMemoryView(ObjectProperty<MemoryBlock>[][] modelArray, int columns, GridPane gridPane) {
-               //Eden setup on the board 
+        // Setup memory region on the board 
         for(int i=0; i < columns; i++) {
             for(int j=0; j < height; j++) {
                 MemoryBlock block = modelArray[i][j].get();

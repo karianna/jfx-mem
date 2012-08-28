@@ -9,7 +9,7 @@ package com.jclarity.anim.memory;
  */
 class MemoryPatternMaker implements IMemoryInterpreter {
 
-    private volatile int seq = 0;
+    private volatile int seq = 1;
     
     private volatile int alloc_seq = 0;
     
@@ -21,7 +21,7 @@ class MemoryPatternMaker implements IMemoryInterpreter {
     @Override
     public MemoryInstruction getNextStep() {
         seq++;
-        if (seq % 3 ==0 ) {
+        if (seq % 10 ==0 ) {
             return new MemoryInstruction(OpCode.KILL, free_seq++);
         } else {
             return new MemoryInstruction(OpCode.ALLOC, alloc_seq++);

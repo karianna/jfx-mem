@@ -11,9 +11,8 @@ import javafx.scene.layout.Region;
  */
 public class MemoryBlock extends Region {
     
-   // private final int id;
+    private final int id;
     private volatile int generation = 0;
-    private volatile boolean alive = true;
     
     private ObjectProperty<MemoryStatus> memoryStatus;
     
@@ -29,8 +28,8 @@ public class MemoryBlock extends Region {
         memoryStatus.set(status);
     }
 
-    public MemoryBlock() {
-       // id = id_;
+    private MemoryBlock(int id_) {
+        id = id_;
         memoryStatus = new SimpleObjectProperty<>(this, "owner", 
                 MemoryStatus.FREE);
 
@@ -47,7 +46,7 @@ public class MemoryBlock extends Region {
     }
     
     void die() {
-        alive = false;
+        memoryStatus.setValue(MemoryStatus.DEAD);
     }
     
     void collect() {
@@ -56,9 +55,7 @@ public class MemoryBlock extends Region {
     
     public int generation() { return generation; }
     
-    public boolean isAlive() { return alive; }
-    
-    //public int getId() { return id; } 
+    public int getBlockId() { return id; } 
     
     /**
      * Helper factory to ensure the properties of the MemoryBlock are OK.
@@ -75,8 +72,8 @@ public class MemoryBlock extends Region {
         }
         
         public synchronized MemoryBlock getBlock() {
-            return new MemoryBlock();
-            //return new MemoryBlock(seq++);
+//            return new MemoryBlock();
+            return new MemoryBlock(seq++);
         } 
         
     }
