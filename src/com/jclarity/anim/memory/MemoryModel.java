@@ -86,7 +86,7 @@ public class MemoryModel {
         edenLock.lock();
         
         // FIXME Are we even getting to here?
-        eden[0][threadToCurrentTLAB.get(0)].getValue().setMemoryStatus(MemoryStatus.ALLOCATED);
+        //eden[0][threadToCurrentTLAB.get(0)].getValue().setMemoryStatus(MemoryStatus.ALLOCATED);
         try {
             boolean hasAllocated = false;
             MemoryBlock mb = factory.getBlock();
@@ -129,6 +129,7 @@ public class MemoryModel {
 
 
     private void youngCollection() {
+        System.out.println("Trying a young collection");
         // FIXME What we need to do is to step through the allocation list
         // and retire everything which is dead. 
         //
