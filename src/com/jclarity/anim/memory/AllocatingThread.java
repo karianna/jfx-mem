@@ -24,7 +24,7 @@ public class AllocatingThread implements Callable<Void> {
     @Override
     public Void call() throws Exception {
          // Some TODOS still to do
-        // Kick off simulation loop to poll get next and update view
+        // Kick off simulation loop to poll get next and update view       
         MemoryInstruction ins = memoryInterpreter.getNextStep();
         INTERP: while (ins != null) {
             switch (ins.getOp()) {
@@ -48,6 +48,7 @@ public class AllocatingThread implements Callable<Void> {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ex) {
+                System.out.println(ex);
             }
         }
         return null;

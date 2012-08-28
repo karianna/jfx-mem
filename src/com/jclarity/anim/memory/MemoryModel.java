@@ -84,12 +84,11 @@ public class MemoryModel {
      */
     void allocate() {
         edenLock.lock();
-        
-        // FIXME Are we even getting to here?
-        //eden[0][threadToCurrentTLAB.get(0)].getValue().setMemoryStatus(MemoryStatus.ALLOCATED);
+
         try {
             boolean hasAllocated = false;
             MemoryBlock mb = factory.getBlock();
+            System.out.println(mb.getBlockId());
             allocList[mb.getBlockId()] = mb;
             // FIXME Single allocating thread
             INNER:
