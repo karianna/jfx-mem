@@ -38,7 +38,7 @@ public class MemoryBlockView extends Region {
                 .otherwise(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.ALLOCATED))
                 .then("-fx-background-color: radial-gradient(radius 100%, blue .4, gray .9, darkgray 1)")
                 .otherwise(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.DEAD))
-                .then("-fx-background-colour: radial-gradient(radius 100%, white 0, black .6")
+                .then("-fx-background-color: radial-gradient(radius 100%, red .1, gray .9, darkgray 1)")
                 .otherwise("")
                 .concat("; -fx-background-radius: 1000em; -fx-background-insets: 5"))));
         
@@ -53,6 +53,7 @@ public class MemoryBlockView extends Region {
 
     void setBlock(MemoryBlock mb) {
         mine = mb;
+        mb.setView(this);
         memoryStatus.setValue(mb.getStatus());
     }
     
