@@ -6,6 +6,7 @@ package com.jclarity.anim.memory;
  */
 public class MemoryBlock {
 
+    // Used to denote position of an allocated block in memory alloc list
     private final int id;
     private volatile int generation = 0;
     private MemoryBlockView view;
@@ -50,9 +51,23 @@ public class MemoryBlock {
             return inst;
         }
         
+        /**
+         * Public factory method
+         * @return 
+         */
         public synchronized MemoryBlock getBlock() {
             return new MemoryBlock(seq++);
         } 
+        
+        /**
+         * Package factory method used in the MemoryModel when resetting Eden
+         * @return 
+         */
+        MemoryBlock getFreeBlock() {
+            MemoryBlock out = new MemoryBlock(0);
+            out.memoryStatus = MemoryStatus.FREE;
+            return out;
+        }
         
         public void reset() {
             seq = 0;

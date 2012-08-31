@@ -46,7 +46,7 @@ public class AllocatingThread implements Callable<Void> {
             }
             ins = memoryInterpreter.getNextStep();
             try {
-                Thread.sleep(1000);
+                Thread.sleep(100);
             } catch (InterruptedException ex) {
                 System.out.println(ex);
             }

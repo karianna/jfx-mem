@@ -21,7 +21,10 @@ class MemoryPatternMaker implements IMemoryInterpreter {
     @Override
     public MemoryInstruction getNextStep() {
         seq++;
-        if (seq % 10 ==0 ) {
+        
+        // FIXME Here's what triggers the bug!
+        // It's when the kill wraps onto the second line of Eden
+        if (seq % 5 ==0 ) {
             return new MemoryInstruction(OpCode.KILL, free_seq++);
         } else {
             return new MemoryInstruction(OpCode.ALLOC, alloc_seq++);
