@@ -23,7 +23,6 @@ public class MemoryModel {
     private final ObjectProperty<MemoryBlockView>[][] s1;
     private final ObjectProperty<MemoryBlockView>[][] s2;
     private final ObjectProperty<MemoryBlockView>[][] tenured;
-    
     // FIXME We also need to model TLABs
     private final ConcurrentMap<Integer, Integer> threadToCurrentTLAB = new ConcurrentHashMap<>();
     private final Lock edenLock = new ReentrantLock();
@@ -93,7 +92,7 @@ public class MemoryModel {
             // FIXME Single allocating thread
             INNER:
             for (int i = 0; i < wEden; i++) {
-                // FIXME What is the difference between getValue() and get() here ?
+                // Must use getValue() to actually see bindable behaviour
                 if (eden[i][threadToCurrentTLAB.get(0)].getValue().getStatus() == MemoryStatus.FREE) {
                     eden[i][threadToCurrentTLAB.get(0)].getValue().setBlock(mb);
                     hasAllocated = true;
@@ -112,7 +111,7 @@ public class MemoryModel {
                 eden[0][threadToCurrentTLAB.get(0)].getValue().setBlock(mb);
                 return;
             }
-           
+
 
             // Can't do anything in Eden, must collect
             youngCollection();
@@ -132,27 +131,26 @@ public class MemoryModel {
     void destroy(int id) {
         allocList[id].die();
 
-        System.out.println("Killed "+ id );
+        System.out.println("Killed " + id);
 
     }
 
     private void resetEden() {
         for (int i = 0; i < wEden; i++) {
             for (int j = 0; j < height; j++) {
-                eden[i][j].get().setBlock(factory.getFreeBlock());
+                eden[i][j].getValue().setBlock(factory.getFreeBlock());
             }
         }
     }
 
-    
     private void youngCollection() {
         System.out.println("Trying a young collection");
         // We need to step through Eden (& implicitly the allocation list)
         // and promote live objects
         for (int i = 0; i < wEden; i++) {
             for (int j = 0; j < height; j++) {
-                MemoryBlock mb = eden[i][j].get().getBlock();
-                switch(mb.getStatus()) {
+                MemoryBlock mb = eden[i][j].getValue().getBlock();
+                switch (mb.getStatus()) {
                     case ALLOCATED:
                         moveToSurvivorSpace(mb);
                         break;
@@ -161,25 +159,27 @@ public class MemoryModel {
                     // Next two can't happen
                     case FREE:
                     default:
-                        System.out.println("Block with status of: "+ mb.getStatus() +" detected in Eden at "+ i +", "+ j);
-                }                
+                        System.out.println("Block with status of: " + mb.getStatus() + " detected in Eden at " + i + ", " + j);
+                }
             }
         }
-        
+
         // Now reset all of Eden to FREE state
         resetEden();
-        
+
         // Reset threadToCurrentTLAB
         // Handles multiple allocating threads
         for (Integer tNum : threadToCurrentTLAB.keySet()) {
             int t = tNum.intValue();
             threadToCurrentTLAB.put(t, t);
         }
+
+        // FIXME Update generational counts for each object
     }
 
     /**
-     * Manages the map of thread ids to currently being used TLAB.
-     * Handles multiple allocating threads
+     * Manages the map of thread ids to currently being used TLAB. Handles
+     * multiple allocating threads
      *
      * @param i
      * @return
@@ -201,7 +201,20 @@ public class MemoryModel {
         return true;
     }
 
-    private void moveToSurvivorSpace(MemoryBlock mb) {
+    // FIXME Handle alternation
+    private ObjectProperty<MemoryBlockView>[][] currentSurvivorSpace() {
+        return s1;
+    }
 
+    private void moveToSurvivorSpace(MemoryBlock mb) {
+        ObjectProperty<MemoryBlockView>[][] to = currentSurvivorSpace();
+        for (int j = 0; j < height; j++) {
+            for (int i = 0; i < wSrv; i++) {
+                if (to[i][j].getValue().getStatus() == MemoryStatus.FREE) {
+                    to[i][j].getValue().setBlock(mb);
+                    return;
+                }
+            }
+        }
     }
 }
