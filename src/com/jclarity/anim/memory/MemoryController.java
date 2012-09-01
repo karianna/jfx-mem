@@ -99,6 +99,10 @@ public class MemoryController implements Initializable {
         AllocatingThread at0 = new AllocatingThread(memoryInterpreter, model);
         srv.submit(at0);
     }
+    
+    public void haltSimulation() {
+        srv.shutdownNow();
+    }
         
     private void initialiseMemoryView(ObjectProperty<MemoryBlockView>[][] modelArray, int columns, GridPane gridPane) {
         // Setup memory region on the board 
