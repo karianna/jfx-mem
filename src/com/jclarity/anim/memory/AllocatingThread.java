@@ -8,7 +8,12 @@ package com.jclarity.anim.memory;
 import java.util.concurrent.Callable;
 
 /**
- * A class which models a thread which "executes code" and allocates memory
+ * A class which models a thread which "executes code" and allocates memory.
+ * The simulation is designed to potentially have multiple allocating threads
+ * running at once.
+ * 
+ * FIXME Some operations are currently multiple-allocation-thread-safe but not
+ * all of them yet
  * 
  */
 public class AllocatingThread implements Callable<Void> {
@@ -32,11 +37,11 @@ public class AllocatingThread implements Callable<Void> {
                     break;
                 case ALLOC:
                 case LARGE_ALLOC: 
+                    // FIXME Need to deal with a large allocation differently
+                    // Maybe allocate two blocks - directly in Tenured?
                     model.allocate();
-                    // FIXME Do we need to update the model manually?
                     break;
                 case KILL:
-                    // FIXME ins.getParam()
                     model.destroy(ins.getParam());
                     break;
                 case EOF: 

@@ -88,8 +88,8 @@ public class MemoryModel {
         try {
             boolean hasAllocated = false;
             MemoryBlock mb = factory.getBlock();
-            System.out.println(mb.getBlockId());
             allocList[mb.getBlockId()] = mb;
+
             // FIXME Single allocating thread
             INNER:
             for (int i = 0; i < wEden; i++) {
@@ -106,11 +106,13 @@ public class MemoryModel {
 
             // Now try allocating a new TLAB for this thread
             // FIXME Single allocating thread
-            hasAllocated = setNewTLABForThread(0);
-            if (hasAllocated) {
+            boolean gotNewTLAB = setNewTLABForThread(0);
+            if (gotNewTLAB) {
+                // Have new TLAB, know we can allocate at offset 0
+                eden[0][threadToCurrentTLAB.get(0)].getValue().setBlock(mb);
                 return;
             }
-
+           
 
             // Can't do anything in Eden, must collect
             youngCollection();
@@ -129,6 +131,9 @@ public class MemoryModel {
      */
     void destroy(int id) {
         allocList[id].die();
+
+        System.out.println("Killed "+ id );
+
     }
 
     private void resetEden() {
