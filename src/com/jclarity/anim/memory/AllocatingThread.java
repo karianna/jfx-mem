@@ -21,6 +21,8 @@ public class AllocatingThread implements Callable<Void> {
     private final IMemoryInterpreter memoryInterpreter;
     private final MemoryModel model;
     
+    private volatile boolean isShutdown = false;
+    
     public AllocatingThread(IMemoryInterpreter memoryInterpreter_, MemoryModel model_) {
         model = model_;
         memoryInterpreter = memoryInterpreter_;
@@ -31,7 +33,7 @@ public class AllocatingThread implements Callable<Void> {
          // Some TODOS still to do
         // Kick off simulation loop to poll get next and update view       
         MemoryInstruction ins = memoryInterpreter.getNextStep();
-        INTERP: while (ins != null) {
+        INTERP: while (ins != null && !isShutdown) {
             switch (ins.getOp()) {
                 case NOP: 
                     break;
@@ -53,7 +55,7 @@ public class AllocatingThread implements Callable<Void> {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException ex) {
-                System.out.println(ex);
+                isShutdown = true;
             }
         }
         return null;
