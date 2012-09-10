@@ -19,24 +19,20 @@ public class MemoryModel {
     private final int wSrv;
     private final int wOld;
     private final int height;
-    
     private final ObjectProperty<MemoryBlockView>[][] eden;
     private final ObjectProperty<MemoryBlockView>[][] s1;
     private final ObjectProperty<MemoryBlockView>[][] s2;
     private final ObjectProperty<MemoryBlockView>[][] tenured;
-    
     // FIXME We also need to model multiple TLABs
     private final ConcurrentMap<Integer, Integer> threadToCurrentTLAB = new ConcurrentHashMap<>();
     private final Lock edenLock = new ReentrantLock();
-    
     // This will become a variable
     private static final int TENURING_THRESHOLD = 4;
-    
     // FIXME Constant used to control lenght of run. Ick.
     private static final int RUN_LENGTH = 200;
-    
     private MemoryBlock.MemoryBlockFactory factory = MemoryBlock.MemoryBlockFactory.getInstance();
     private final MemoryBlock[] allocList;
+    private boolean isS1Current = true;
 
     public ObjectProperty<MemoryBlockView>[][] getEden() {
         return eden;
@@ -150,8 +146,27 @@ public class MemoryModel {
         }
     }
 
+    private void resetSrv(ObjectProperty<MemoryBlockView>[][] blocks) {
+        for (int i = 0; i < wSrv; i++) {
+            for (int j = 0; j < height / 2; j++) {
+                blocks[i][j].getValue().setBlock(factory.getFreeBlock());
+            }
+        }
+    }
+
+    /**
+     * This class models the state of the Young generational collection
+     */
+    private class YGCollectionContext {
+
+        private boolean prematurePromote = false;
+        private boolean hasFlippedSrvSpaces = false;
+    }
+
     private void youngCollection() {
         System.out.println("Trying a young collection");
+
+        YGCollectionContext ctx = new YGCollectionContext();
         // We need to step through Eden (& implicitly the allocation list)
         // and promote live objects
         for (int i = 0; i < wEden; i++) {
@@ -159,7 +174,7 @@ public class MemoryModel {
                 MemoryBlock mb = eden[i][j].getValue().getBlock();
                 switch (mb.getStatus()) {
                     case ALLOCATED:
-                        moveToSurvivorSpace(mb);
+                        moveToSurvivorSpace(ctx, mb);
                         break;
                     case DEAD:
                         break;
@@ -208,21 +223,67 @@ public class MemoryModel {
         return true;
     }
 
-    // FIXME Handle alternation
     private ObjectProperty<MemoryBlockView>[][] currentSurvivorSpace() {
-        return s1;
+        return (isS1Current ? s1 : s2);
     }
 
-    private void moveToSurvivorSpace(MemoryBlock mb) {
+    private void flipSurvivorSpaces() {
+        isS1Current = !isS1Current;
+    }
+
+    /**
+     * This method is used to empty the current survivor space into Tenured
+     */
+    private void compactCurrentSrvSpace() {
+        ObjectProperty<MemoryBlockView>[][] from = currentSurvivorSpace();
+        flipSurvivorSpaces();
+        for (int i = 0; i < wSrv; i++) {
+            for (int j = 0; j < height / 2; j++) {
+                if (from[i][j].getValue().getStatus() == MemoryStatus.ALLOCATED) {
+                    MemoryBlock alive = from[i][j].getValue().getBlock();
+                    boolean moved = tryToAddToCurrentSrvSpace(alive);
+                }
+            }
+        }
+        resetSrv(from);
+    }
+
+    /**
+     * This method tries to add a MemoryBlock to the current survivor space
+     *
+     * @param mb
+     * @return
+     */
+    private boolean tryToAddToCurrentSrvSpace(MemoryBlock mb) {
         ObjectProperty<MemoryBlockView>[][] to = currentSurvivorSpace();
         for (int i = 0; i < wSrv; i++) {
             for (int j = 0; j < height / 2; j++) {
                 if (to[i][j].getValue().getStatus() == MemoryStatus.FREE) {
                     to[i][j].getValue().setBlock(mb);
-                    return;
+                    return true;
                 }
             }
         }
+        return false;
     }
 
+    private void moveToSurvivorSpace(YGCollectionContext ctx, MemoryBlock mb) {
+        if (tryToAddToCurrentSrvSpace(mb)) {
+            return;
+        }
+
+        // If we reach here, we haven't found a free block to move our 
+        // surviving Eden object to.
+        if (!ctx.hasFlippedSrvSpaces) {
+            compactCurrentSrvSpace();
+            ctx.hasFlippedSrvSpaces = true;
+            // Try to add the surviving Eden object to the flipped srv space
+            if (tryToAddToCurrentSrvSpace(mb)) {
+                return;
+            }
+
+        }
+        // Uh-oh. Looks like we need to need to do premature promotion
+//        prematurePromote();
+    }
 }

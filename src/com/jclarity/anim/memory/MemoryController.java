@@ -101,9 +101,16 @@ public class MemoryController implements Initializable {
     public void haltSimulation() {
         srv.shutdownNow();
     }
-        
+
+    /**
+     * Setup memory region on the board.
+     * 
+     * @param modelArray
+     * @param columns
+     * @param height_
+     * @param gridPane 
+     */
     private void initialiseMemoryView(ObjectProperty<MemoryBlockView>[][] modelArray, int columns, int height_, GridPane gridPane) {
-        // Setup memory region on the board 
         for(int i=0; i < columns; i++) {
             for(int j=0; j < height_; j++) {
                 MemoryBlockView block = modelArray[i][j].get();
