@@ -32,7 +32,7 @@ public class MemoryModel {
     private static final int RUN_LENGTH = 200;
     private MemoryBlock.MemoryBlockFactory factory = MemoryBlock.MemoryBlockFactory.getInstance();
     private final MemoryBlock[] allocList;
-    private boolean isS1Current = true;
+    private boolean isS1Current = false;
 
     public ObjectProperty<MemoryBlockView>[][] getEden() {
         return eden;
