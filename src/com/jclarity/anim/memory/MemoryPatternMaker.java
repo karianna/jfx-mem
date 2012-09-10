@@ -22,9 +22,7 @@ class MemoryPatternMaker implements IMemoryInterpreter {
     public MemoryInstruction getNextStep() {
         seq++;
         
-        // FIXME Here's what triggers the bug!
-        // It's when the kill wraps onto the second line of Eden
-        if (seq % 3 ==0 ) {
+        if (seq % 4 ==0 ) {
             return new MemoryInstruction(OpCode.KILL, free_seq++);
         } else {
             return new MemoryInstruction(OpCode.ALLOC, alloc_seq++);

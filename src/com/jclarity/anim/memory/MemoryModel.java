@@ -109,6 +109,8 @@ public class MemoryModel {
             // Now try allocating a new TLAB for this thread
             // FIXME Single allocating thread
             boolean gotNewTLAB = setNewTLABForThread(0);
+            System.out.println("Trying to get new TLAB: "+ gotNewTLAB);
+            
             if (gotNewTLAB) {
                 // Have new TLAB, know we can allocate at offset 0
                 eden[0][threadToCurrentTLAB.get(0)].getValue().setBlock(mb);
@@ -174,6 +176,7 @@ public class MemoryModel {
                 MemoryBlock mb = eden[i][j].getValue().getBlock();
                 switch (mb.getStatus()) {
                     case ALLOCATED:
+                        mb.mark();
                         moveToSurvivorSpace(ctx, mb);
                         break;
                     case DEAD:
@@ -241,6 +244,7 @@ public class MemoryModel {
             for (int j = 0; j < height / 2; j++) {
                 if (from[i][j].getValue().getStatus() == MemoryStatus.ALLOCATED) {
                     MemoryBlock alive = from[i][j].getValue().getBlock();
+                    alive.mark();
                     boolean moved = tryToAddToCurrentSrvSpace(alive);
                 }
             }
