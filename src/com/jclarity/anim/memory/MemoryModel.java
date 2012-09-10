@@ -19,15 +19,22 @@ public class MemoryModel {
     private final int wSrv;
     private final int wOld;
     private final int height;
+    
     private final ObjectProperty<MemoryBlockView>[][] eden;
     private final ObjectProperty<MemoryBlockView>[][] s1;
     private final ObjectProperty<MemoryBlockView>[][] s2;
     private final ObjectProperty<MemoryBlockView>[][] tenured;
-    // FIXME We also need to model TLABs
+    
+    // FIXME We also need to model multiple TLABs
     private final ConcurrentMap<Integer, Integer> threadToCurrentTLAB = new ConcurrentHashMap<>();
     private final Lock edenLock = new ReentrantLock();
+    
+    // This will become a variable
     private static final int TENURING_THRESHOLD = 4;
+    
+    // FIXME Constant used to control lenght of run. Ick.
     private static final int RUN_LENGTH = 200;
+    
     private MemoryBlock.MemoryBlockFactory factory = MemoryBlock.MemoryBlockFactory.getInstance();
     private final MemoryBlock[] allocList;
 
@@ -53,10 +60,10 @@ public class MemoryModel {
         wOld = wOld_;
         height = height_;
 
-        eden = createMemoryBlockModel(wEden);
-        s1 = createMemoryBlockModel(wSrv);
-        s2 = createMemoryBlockModel(wSrv);
-        tenured = createMemoryBlockModel(wOld);
+        eden = createMemoryBlockModel(wEden, height);
+        s1 = createMemoryBlockModel(wSrv, height / 2);
+        s2 = createMemoryBlockModel(wSrv, height / 2);
+        tenured = createMemoryBlockModel(wOld, height);
 
         int nblocks = height * (wEden * +2 * wSrv + wOld);
 
@@ -66,10 +73,10 @@ public class MemoryModel {
         threadToCurrentTLAB.put(0, 0);
     }
 
-    private ObjectProperty<MemoryBlockView>[][] createMemoryBlockModel(int width) {
-        ObjectProperty<MemoryBlockView>[][] modelArray = new ObjectProperty[width][height];
+    private ObjectProperty<MemoryBlockView>[][] createMemoryBlockModel(int width, int height_) {
+        ObjectProperty<MemoryBlockView>[][] modelArray = new ObjectProperty[width][height_];
         for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
+            for (int j = 0; j < height_; j++) {
                 modelArray[i][j] = new SimpleObjectProperty<>();
                 modelArray[i][j].set(new MemoryBlockView());
             }
@@ -208,8 +215,8 @@ public class MemoryModel {
 
     private void moveToSurvivorSpace(MemoryBlock mb) {
         ObjectProperty<MemoryBlockView>[][] to = currentSurvivorSpace();
-        for (int j = 0; j < height; j++) {
-            for (int i = 0; i < wSrv; i++) {
+        for (int i = 0; i < wSrv; i++) {
+            for (int j = 0; j < height / 2; j++) {
                 if (to[i][j].getValue().getStatus() == MemoryStatus.FREE) {
                     to[i][j].getValue().setBlock(mb);
                     return;
@@ -217,4 +224,5 @@ public class MemoryModel {
             }
         }
     }
+
 }

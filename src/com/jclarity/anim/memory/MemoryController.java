@@ -26,11 +26,9 @@ import javafx.scene.layout.PaneBuilder;
 public class MemoryController implements Initializable {
     
     private MemoryModel model;
+    // NOTE The survivor spaces are half the height of the Eden & tenured spaces
     private int height = 8;
-
-    //Probably not needed as we will update by bindings
-    //private MemoryView view;
-
+    
     // FIXME Move MemoryInterpreter to an AllocatingThread factory
     private IMemoryInterpreter memoryInterpreter;
     private final ExecutorService srv = Executors.newScheduledThreadPool(2);
@@ -82,10 +80,10 @@ public class MemoryController implements Initializable {
         model = new MemoryModel(edenColumns, survivorColumns, tenuredColumns, height);
         
         //Eden setup on the board 
-        initialiseMemoryView(model.getEden(), edenColumns, edenGridPane);
-        initialiseMemoryView(model.getS1(), survivorColumns, s1GridPane);
-        initialiseMemoryView(model.getS2(), survivorColumns, s2GridPane);
-        initialiseMemoryView(model.getTenured(), tenuredColumns, tenuredGridPane);
+        initialiseMemoryView(model.getEden(), edenColumns, height, edenGridPane);
+        initialiseMemoryView(model.getS1(), survivorColumns, height / 2, s1GridPane);
+        initialiseMemoryView(model.getS2(), survivorColumns, height / 2, s2GridPane);
+        initialiseMemoryView(model.getTenured(), tenuredColumns, height, tenuredGridPane);
         
         beginButton.setDisable(true);
         
@@ -104,10 +102,10 @@ public class MemoryController implements Initializable {
         srv.shutdownNow();
     }
         
-    private void initialiseMemoryView(ObjectProperty<MemoryBlockView>[][] modelArray, int columns, GridPane gridPane) {
+    private void initialiseMemoryView(ObjectProperty<MemoryBlockView>[][] modelArray, int columns, int height_, GridPane gridPane) {
         // Setup memory region on the board 
         for(int i=0; i < columns; i++) {
-            for(int j=0; j < height; j++) {
+            for(int j=0; j < height_; j++) {
                 MemoryBlockView block = modelArray[i][j].get();
                 gridPane.add(PaneBuilder.create().children(block).build(), i, j);
             }
