@@ -83,8 +83,8 @@ public class MemoryController implements Initializable {
         // FIXME needs some refactoring
         switch(resourceType.getSelectionModel().getSelectedItem().toString()) {
             case "File" :  
-                // memoryInterpreter = new MemoryInterpreterFileLoader(resourcePath.getText());
-                memoryInterpreter = new MemoryPatternMaker();
+                 memoryInterpreter = new MemoryInterpreterFileLoader(resourcePath.getText());
+//                memoryInterpreter = new MemoryPatternMaker();
                 break;
         }
         AllocatingThread at0 = new AllocatingThread(memoryInterpreter, model);
