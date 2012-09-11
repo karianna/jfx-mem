@@ -1,8 +1,6 @@
 package com.jclarity.anim.memory;
 
 import com.jclarity.anim.memory.MemoryBlock.MemoryBlockFactory;
-import com.jclarity.anim.memory.MemoryPool.Eden;
-import com.jclarity.anim.memory.MemoryPool.SurvivorSpace;
 import com.jclarity.anim.memory.MemoryPool.Tenured;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,13 +17,9 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class MemoryModel {
 
-    private final int wEden;
-    private final int wSrv;
-    private final int wOld;
-    private final int height;
-    private final Eden eden;
-    private final SurvivorSpace s1;
-    private final SurvivorSpace s2;
+    private final MemoryPool eden;
+    private final MemoryPool s1;
+    private final MemoryPool s2;
     private final Tenured tenured;
     // FIXME We also need to model multiple TLABs
     private final ConcurrentMap<Integer, Integer> threadToCurrentTLAB = new ConcurrentHashMap<>();
@@ -63,23 +57,43 @@ public class MemoryModel {
         isS1Current = !isS1Current;
     }
 
-    public MemoryModel(int wEden_, int wSrv_, int wOld_, int height_) {
-        wEden = wEden_;
-        wSrv = wSrv_;
-        wOld = wOld_;
-        height = height_;
+    public MemoryModel(int wEden, int wSrv, int wOld, int height) {
 
-        eden = new Eden(wEden, height);
-        s1 = new SurvivorSpace(wSrv, height / 2);
-        s2 = new SurvivorSpace(wSrv, height / 2);
+        eden = new MemoryPool(wEden, height);
+        s1 = new MemoryPool(wSrv, height / 2);
+        s2 = new MemoryPool(wSrv, height / 2);
         tenured = new Tenured(wOld, height);
 
-        int nblocks = height * (wEden * +2 * wSrv + wOld);
+        int nblocks = height * (wEden + 2 * wSrv + wOld);
 
         allocList = new MemoryBlock[nblocks * RUN_LENGTH];
 
         // FIXME Just single thread for now
         threadToCurrentTLAB.put(0, 0);
+    }
+
+    /**
+     * Manages the map of thread ids to currently being used TLAB. Handles
+     * multiple allocating threads
+     *
+     * @param i
+     * @return
+     */
+    boolean setNewTLABForThread(int i) {
+        // FIXME Test case PLX
+        Integer row = threadToCurrentTLAB.get(i);
+        int max = row.intValue();
+        for (Integer val : threadToCurrentTLAB.values()) {
+            int v = val.intValue();
+            if (v >= eden.height() - 1) {
+                return false;
+            }
+            if (v > max) {
+                max = v;
+            }
+        }
+        threadToCurrentTLAB.put(i, max + 1);
+        return true;
     }
 
     /**
@@ -95,7 +109,7 @@ public class MemoryModel {
             allocList[allocMax] = mb;
 
             // FIXME Single allocating thread
-            for (int i = 0; i < wEden; i++) {
+            for (int i = 0; i < eden.width(); i++) {
                 // Must use getValue() to actually see bindable behaviour
                 MemoryBlockView mbv = eden.getValue(i, threadToCurrentTLAB.get(0));
                 if (mbv.getStatus() == MemoryStatus.FREE) {
@@ -120,6 +134,8 @@ public class MemoryModel {
 
             // Eden is now reset, can allocate at offset 0 on current TLAB
             eden.getValue(0, threadToCurrentTLAB.get(0)).setBlock(mb);
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
             edenLock.unlock();
         }
@@ -141,7 +157,10 @@ public class MemoryModel {
      */
     private void youngCollection() {
         System.out.println("Trying a young collection");
-
+        if (!selfCheckEden()) {
+            throw new RuntimeException("Inconsistent Eden state detected"); 
+        }
+            
         final List<MemoryBlock> evacuees = new ArrayList<>();
 
         // We need to step through Eden (& implicitly the allocation list)
@@ -192,14 +211,15 @@ public class MemoryModel {
         // First of all, make sure that we're not so large that we won't fit in
         // survivor space. This implies an effective tenuring threshold of 1
         if (evacuees.size() > from.size()) {
-            prematurePromote(1);
+            prematurePromote(0);
+            flipSurvivorSpaces();
             moveToTenured(evacuees);
             return;
         }
 
         int spaceFree = from.spaceFree();
-        if (spaceFree > evacuees.size()) {
-            // Plenty of space - just move over the survivors
+        if (spaceFree >= evacuees.size()) {
+            // Enough space - just move over the survivors
             for (MemoryBlock mb : evacuees) {
                 if (!from.tryAdd(mb)) {
                     System.out.println("Block id " + mb.getBlockId() + " status: " + mb.getStatus() + " failed YG promotion (before flip)");
@@ -213,8 +233,8 @@ public class MemoryModel {
         flipSurvivorSpaces();
         MemoryPool to = currentSurvivorSpace();
         spaceFree = compactAndEvacuateSrvSpace(from, to);
-        if (spaceFree > evacuees.size()) {
-            // We made space - move the survivors into the new to space
+        if (spaceFree >= evacuees.size()) {
+            // We made enough space - move the survivors into the new to space
             for (MemoryBlock mb : evacuees) {
                 if (!to.tryAdd(mb)) {
                     System.out.println("Block id " + mb.getBlockId() + " status: " + mb.getStatus() + " failed YG promotion (after flip)");
@@ -223,7 +243,7 @@ public class MemoryModel {
             return;
         }
 
-        // If we get here, we need to promote to tenured
+        // If we get here, we need to promote some survivors to tenured
         System.out.println("Need to collect tenured");
         for (int gen = TENURING_THRESHOLD; gen > 0; gen--) {
             spaceFree = prematurePromote(gen);
@@ -240,30 +260,6 @@ public class MemoryModel {
 
 
 
-    }
-
-    /**
-     * Manages the map of thread ids to currently being used TLAB. Handles
-     * multiple allocating threads
-     *
-     * @param i
-     * @return
-     */
-    boolean setNewTLABForThread(int i) {
-        // FIXME Test case PLX
-        Integer row = threadToCurrentTLAB.get(i);
-        int max = row.intValue();
-        for (Integer val : threadToCurrentTLAB.values()) {
-            int v = val.intValue();
-            if (v >= height - 1) {
-                return false;
-            }
-            if (v > max) {
-                max = v;
-            }
-        }
-        threadToCurrentTLAB.put(i, max + 1);
-        return true;
     }
 
     /**
@@ -328,6 +324,7 @@ public class MemoryModel {
                 }
             }
         }
+        from.reset();
         return spaceFreed;
     }
 
@@ -337,5 +334,10 @@ public class MemoryModel {
                 throw new RuntimeException("OOME when trying a bulk move to tenured");
             }
         }
+    }
+
+    private boolean selfCheckEden() {
+        if (eden.spaceFree() > 0) return false;
+        return true;
     }
 }

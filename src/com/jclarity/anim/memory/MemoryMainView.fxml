@@ -42,8 +42,6 @@
                     <ComboBox  fx:id="survivorColumnsCombo">
                         <items>
                             <FXCollections fx:factory="observableArrayList">
-                                <Integer fx:value="4" />
-                                <Integer fx:value="5" />
                                 <Integer fx:value="6" />
                             </FXCollections>
                         </items>
@@ -54,10 +52,9 @@
                     <ComboBox  fx:id="tenuredColumnsCombo">
                         <items>
                             <FXCollections fx:factory="observableArrayList">
-                                <Integer fx:value="5" />
-                                <Integer fx:value="6" />
                                 <Integer fx:value="7" />
                                 <Integer fx:value="8" />
+                                <Integer fx:value="9" />
                             </FXCollections>
                         </items>
                     </ComboBox>
@@ -67,9 +64,9 @@
                 <Button text="Begin" onAction="#beginSimulation" fx:id="beginButton" />
             </VBox>
         </GridPane>
-     </VBox>   
-     <HBox>
-         <GridPane fx:id="edenGridPane" alignment="center" hgap="10" vgap="10" 
+    </VBox>   
+    <HBox>
+        <GridPane fx:id="edenGridPane" alignment="center" hgap="10" vgap="10" 
                    prefHeight="372.0" prefWidth="572.0" 
                    GridPane.vgrow="always" GridPane.hgrow="always" >
             <padding>
@@ -78,26 +75,26 @@
         </GridPane>
         <VBox>
             <GridPane fx:id="s1GridPane" alignment="center" hgap="10" vgap="10" 
-                    prefHeight="372.0" prefWidth="572.0" 
-                    GridPane.vgrow="always" GridPane.hgrow="always" >
+                      prefHeight="372.0" prefWidth="572.0" 
+                      GridPane.vgrow="always" GridPane.hgrow="always" >
                 <padding>
                     <Insets top="10" right="10" bottom="10" left="10"/>
                 </padding>
             </GridPane>
             <GridPane fx:id="s2GridPane" alignment="center" hgap="10" vgap="10" 
-                   prefHeight="372.0" prefWidth="572.0" 
-                   GridPane.vgrow="always" GridPane.hgrow="always" >
+                      prefHeight="372.0" prefWidth="572.0" 
+                      GridPane.vgrow="always" GridPane.hgrow="always" >
                 <padding>
                     <Insets top="10" right="10" bottom="10" left="10"/>
                 </padding>
             </GridPane>
         </VBox>    
         <GridPane fx:id="tenuredGridPane" alignment="center" hgap="10" vgap="10" 
-               prefHeight="372.0" prefWidth="572.0" 
-               GridPane.vgrow="always" GridPane.hgrow="always" >
-        <padding>
-            <Insets top="10" right="10" bottom="10" left="10"/>
-        </padding>
+                  prefHeight="372.0" prefWidth="572.0" 
+                  GridPane.vgrow="always" GridPane.hgrow="always" >
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
         </GridPane>
-     </HBox>
+    </HBox>
 </VBox>

@@ -8,7 +8,7 @@ import javafx.beans.property.SimpleObjectProperty;
 /**
  *
  */
-public abstract class MemoryPool {
+public class MemoryPool {
 
     protected final int width;
     protected final int height;
@@ -84,11 +84,6 @@ public abstract class MemoryPool {
         }
     }
 
-    /**
-     * Compact the pool
-     */
-    abstract void compact();
-
     int width() {
         return width;
     }
@@ -113,36 +108,12 @@ public abstract class MemoryPool {
         return width * height;
     }
 
-    static class Eden extends MemoryPool {
-
-        public Eden(int width_, int height_) {
-            super(width_, height_);
-        }
-
-        @Override
-        void compact() {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-    }
-
-    static class SurvivorSpace extends MemoryPool {
-
-        public SurvivorSpace(int width_, int height_) {
-            super(width_, height_);
-        }
-
-        @Override
-        void compact() {
-        }
-    }
-
     static class Tenured extends MemoryPool {
 
         public Tenured(int width_, int height_) {
             super(width_, height_);
         }
 
-        @Override
         void compact() {
             System.out.println("Trying a tenured compaction");
 
