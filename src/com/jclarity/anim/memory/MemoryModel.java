@@ -1,5 +1,6 @@
 package com.jclarity.anim.memory;
 
+import com.jclarity.anim.memory.MemoryBlock.MemoryBlockFactory;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
@@ -30,7 +31,7 @@ public class MemoryModel {
     private static final int TENURING_THRESHOLD = 4;
     // FIXME Constant used to control lenght of run. Ick.
     private static final int RUN_LENGTH = 200;
-    private MemoryBlock.MemoryBlockFactory factory = MemoryBlock.MemoryBlockFactory.getInstance();
+    private MemoryBlockFactory factory = MemoryBlockFactory.getInstance();
     private final MemoryBlock[] allocList;
     private boolean isS1Current = false;
 
@@ -109,8 +110,8 @@ public class MemoryModel {
             // Now try allocating a new TLAB for this thread
             // FIXME Single allocating thread
             boolean gotNewTLAB = setNewTLABForThread(0);
-            System.out.println("Trying to get new TLAB: "+ gotNewTLAB);
-            
+            System.out.println("Trying to get new TLAB: " + gotNewTLAB);
+
             if (gotNewTLAB) {
                 // Have new TLAB, know we can allocate at offset 0
                 eden[0][threadToCurrentTLAB.get(0)].getValue().setBlock(mb);
@@ -120,8 +121,9 @@ public class MemoryModel {
 
             // Can't do anything in Eden, must collect
             youngCollection();
-
-
+            
+            // Eden is now reset, can allocate at offset 0 on current TLAB
+            eden[0][threadToCurrentTLAB.get(0)].getValue().setBlock(mb);
         } finally {
             edenLock.unlock();
         }
@@ -135,9 +137,7 @@ public class MemoryModel {
      */
     void destroy(int id) {
         allocList[id].die();
-
         System.out.println("Killed " + id);
-
     }
 
     private void resetEden() {
@@ -157,12 +157,13 @@ public class MemoryModel {
     }
 
     /**
-     * This class models the state of the Young generational collection
+     * This class models the state of an ongoing Young generational collection
      */
     private class YGCollectionContext {
 
         private boolean prematurePromote = false;
         private boolean hasFlippedSrvSpaces = false;
+        private int genPromoted = TENURING_THRESHOLD;
     }
 
     private void youngCollection() {
@@ -198,8 +199,6 @@ public class MemoryModel {
             int t = tNum.intValue();
             threadToCurrentTLAB.put(t, t);
         }
-
-        // FIXME Update generational counts for each object
     }
 
     /**
@@ -234,10 +233,23 @@ public class MemoryModel {
         isS1Current = !isS1Current;
     }
 
+    // FIXME Handle Tenured
+    private boolean tryToAddToTenured(MemoryBlock mb) {
+        for (int i = 0; i < wOld; i++) {
+            for (int j = 0; j < height; j++) {
+                if (tenured[i][j].getValue().getStatus() == MemoryStatus.FREE) {
+                    tenured[i][j].getValue().setBlock(mb);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /**
-     * This method is used to empty the current survivor space into Tenured
+     * This method is used to empty the current survivor space into the other
      */
-    private void compactCurrentSrvSpace() {
+    private void compactCurrentSrvSpace(YGCollectionContext ctx) {
         ObjectProperty<MemoryBlockView>[][] from = currentSurvivorSpace();
         flipSurvivorSpaces();
         for (int i = 0; i < wSrv; i++) {
@@ -246,10 +258,42 @@ public class MemoryModel {
                     MemoryBlock alive = from[i][j].getValue().getBlock();
                     alive.mark();
                     boolean moved = tryToAddToCurrentSrvSpace(alive);
+                    if (!moved) {
+                        ctx.prematurePromote = true;
+                    }
                 }
             }
         }
         resetSrv(from);
+    }
+
+    /**
+     * Walk through the current survivor space, and promote everything which has
+     * this generation or higher
+     *
+     * @param genPromoted
+     */
+    private void prematurePromote(int genPromoted) {
+        ObjectProperty<MemoryBlockView>[][] from = currentSurvivorSpace();
+        for (int i = 0; i < wSrv; i++) {
+            INNER:
+            for (int j = 0; j < height / 2; j++) {
+                if (from[i][j].getValue().getStatus() == MemoryStatus.ALLOCATED) {
+                    MemoryBlock alive = from[i][j].getValue().getBlock();
+                    if (alive.generation() >= genPromoted) {
+                        alive.mark();
+                        if (tryToAddToTenured(alive)) {
+                            // Remove from Survivor spaces
+                            from[i][j].getValue().setBlock(factory.getFreeBlock());
+                            continue INNER;
+                        } else {
+                            throw new RuntimeException("OOME at " + i + ", " + j);
+                        }
+
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -279,15 +323,17 @@ public class MemoryModel {
         // If we reach here, we haven't found a free block to move our 
         // surviving Eden object to.
         if (!ctx.hasFlippedSrvSpaces) {
-            compactCurrentSrvSpace();
+            compactCurrentSrvSpace(ctx);
             ctx.hasFlippedSrvSpaces = true;
             // Try to add the surviving Eden object to the flipped srv space
-            if (tryToAddToCurrentSrvSpace(mb)) {
+            if (!ctx.prematurePromote && tryToAddToCurrentSrvSpace(mb)) {
                 return;
             }
 
         }
         // Uh-oh. Looks like we need to need to do premature promotion
-//        prematurePromote();
+        // of the next to lowest generation that we've already done
+        ctx.genPromoted--;
+        prematurePromote(ctx.genPromoted);
     }
 }

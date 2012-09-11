@@ -22,7 +22,7 @@ class MemoryPatternMaker implements IMemoryInterpreter {
     public MemoryInstruction getNextStep() {
         seq++;
         
-        if (seq % 5 ==0 ) {
+        if ((seq % 5 == 0) || (seq % 5 == 3)) {
             return new MemoryInstruction(OpCode.KILL, free_seq++);
         } else {
             return new MemoryInstruction(OpCode.ALLOC, alloc_seq++);
