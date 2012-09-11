@@ -1,15 +1,17 @@
 package com.jclarity.anim.memory;
 
+import java.util.ArrayList;
+import java.util.List;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
 /**
  *
  */
-public class MemoryPool {
+public abstract class MemoryPool {
 
-    private final int width;
-    private final int height;
+    protected final int width;
+    protected final int height;
     private final ObjectProperty<MemoryBlockView>[][] view;
     private final MemoryBlock.MemoryBlockFactory factory = MemoryBlock.MemoryBlockFactory.getInstance();
 
@@ -71,7 +73,6 @@ public class MemoryPool {
         return view[i][j].get();
     }
 
-    
     /**
      * Resets this pool to completely free state
      */
@@ -79,6 +80,75 @@ public class MemoryPool {
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 view[i][j].getValue().setBlock(factory.getFreeBlock());
+            }
+        }
+    }
+
+    /**
+     * Compact the pool
+     */
+    abstract void compact();
+
+    int width() {
+        return width;
+    }
+
+    int height() {
+        return height;
+    }
+
+    static class Eden extends MemoryPool {
+
+        public Eden(int width_, int height_) {
+            super(width_, height_);
+        }
+
+        @Override
+        void compact() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+    }
+
+    static class SurvivorSpace extends MemoryPool {
+
+        public SurvivorSpace(int width_, int height_) {
+            super(width_, height_);
+        }
+
+        @Override
+        void compact() {
+        }
+    }
+
+    static class Tenured extends MemoryPool {
+
+        public Tenured(int width_, int height_) {
+            super(width_, height_);
+        }
+
+        @Override
+        void compact() {
+            System.out.println("Trying a tenured compaction");
+
+            final List<MemoryBlock> evacuees = new ArrayList<>();
+
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < height; j++) {
+                    MemoryBlockView mbv = getValue(i, j);
+                    if (mbv.getStatus() == MemoryStatus.ALLOCATED) {
+                        MemoryBlock alive = mbv.getBlock();
+                        alive.mark();
+                        evacuees.add(alive);
+                    }
+                }
+            }
+            System.out.println(evacuees.size() +" blocks survived tenured compaction");
+            // At this point, we have all the live blocks still in tenured
+            reset();
+            for (MemoryBlock mb : evacuees) {
+                // This should always succeed - we never have more in evacuees than 
+                // will fit into tenured
+                tryAdd(mb);
             }
         }
     }

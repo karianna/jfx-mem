@@ -74,10 +74,10 @@ public class MemoryController implements Initializable {
         model = new MemoryModel(edenColumns, survivorColumns, tenuredColumns, height);
         
         //Eden setup on the board 
-        initialiseMemoryView(model.getEden(), edenColumns, height, edenGridPane);
-        initialiseMemoryView(model.getS1(), survivorColumns, height / 2, s1GridPane);
-        initialiseMemoryView(model.getS2(), survivorColumns, height / 2, s2GridPane);
-        initialiseMemoryView(model.getTenured(), tenuredColumns, height, tenuredGridPane);
+        initialiseMemoryView(model.getEden(), edenGridPane);
+        initialiseMemoryView(model.getS1(), s1GridPane);
+        initialiseMemoryView(model.getS2(), s2GridPane);
+        initialiseMemoryView(model.getTenured(), tenuredGridPane);
         
         beginButton.setDisable(true);
         
@@ -104,9 +104,9 @@ public class MemoryController implements Initializable {
      * @param height_
      * @param gridPane 
      */
-    private void initialiseMemoryView(MemoryPool pool, int columns, int height_, GridPane gridPane) {
-        for(int i=0; i < columns; i++) {
-            for(int j=0; j < height_; j++) {
+    private void initialiseMemoryView(MemoryPool pool, GridPane gridPane) {
+        for(int i=0; i < pool.width(); i++) {
+            for(int j=0; j < pool.height(); j++) {
                 MemoryBlockView block = pool.get(i,j);
                 gridPane.add(PaneBuilder.create().children(block).build(), i, j);
             }
