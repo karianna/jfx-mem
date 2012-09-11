@@ -9,5 +9,5 @@ enum OpCode {
     ALLOC,
     LARGE_ALLOC,
     KILL,
-    EOF
+    EOF;    
 }

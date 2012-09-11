@@ -26,6 +26,10 @@ public class AllocatingThread implements Callable<Void> {
         memoryInterpreter = memoryInterpreter_;
     }
 
+    public boolean isShutdown() {
+        return isShutdown;
+    }
+    
     @Override
     public Void call() throws Exception {
         // Some TODOS still to do
@@ -55,8 +59,10 @@ public class AllocatingThread implements Callable<Void> {
                         model.destroy(ins.getParam());
                         break;
                     case EOF:
+                        isShutdown = true;
                         break INTERP;
-                    default: // Shouldn't happen 
+                    default: // Shouldn't happen
+                        isShutdown = true;
                         break INTERP;
                 }
                 ins = memoryInterpreter.getNextStep();

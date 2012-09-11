@@ -1,15 +1,17 @@
 package com.jclarity.anim.memory;
 
+import static com.jclarity.anim.memory.OpCode.*;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.List;
-
-import static com.jclarity.anim.memory.OpCode.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
+ * An interpreter which loads a run from a file
  *
  * @author jpgough
  */
@@ -18,25 +20,27 @@ public class MemoryInterpreterFileLoader implements IMemoryInterpreter {
     private final String filePath;
     private List<String> lines = null;
     private Iterator<String> it = null;
-    
-    private enum Command {
-        
-    }
-    
-    private final static String nopStr = "NOP\\s+\\d+";
-    private final static String allocStr = "ALLOC";
-    private final static String largeAllocStr = "LARGE_ALLOC";
 
-    
-    public MemoryInterpreterFileLoader(String filePath) {
-        //Potentially load the file here rather than holding the string
-        this.filePath = filePath;
+    public MemoryInterpreterFileLoader(String filePath_) {
+        filePath = filePath_;
+    }
+
+    /**
+     * Alternate constructor - used for testing etc
+     * @param lines_ 
+     */
+    public MemoryInterpreterFileLoader(List<String> lines_) {
+        filePath = "";
+        lines = lines_;
     }
 
     @Override
     public MemoryInstruction getNextStep() {
         if (lines == null) {
             loadLines();
+        }
+        if (it == null) {
+            it = lines.iterator();
         }
 
         // Process next line in the file
@@ -51,13 +55,48 @@ public class MemoryInterpreterFileLoader implements IMemoryInterpreter {
     private void loadLines() {
         try {
             lines = Files.readAllLines(Paths.get(filePath), Charset.defaultCharset());
-            it = lines.iterator();
         } catch (IOException ex) {
-            throw new RuntimeException("File: " + filePath + " not found");
+            throw new RuntimeException("File: " + filePath + " not found", ex);
+        }
+    }
+
+    private static enum Token {
+
+        NOP("NOP\\s*(\\d+)?", OpCode.NOP),
+        ALLOC("ALLOC", OpCode.ALLOC),
+        LARGE_ALLOC("LARGE_ALLOC", OpCode.LARGE_ALLOC),
+        KILL("KILL\\s+(\\d+)", OpCode.KILL);
+        private final String toMatch;
+        private final Pattern p;
+        private final OpCode op;
+
+        private Token(String toMatch_, OpCode op_) {
+            toMatch = toMatch_;
+            p = Pattern.compile(toMatch);
+            op = op_;
+        }
+
+        Pattern getP() {
+            return p;
+        }
+
+        OpCode getOpCode() {
+            return op;
         }
     }
 
     private MemoryInstruction parseLine(String line) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        for (Token t : Token.values()) {
+            Matcher m = t.getP().matcher(line);
+            if (m.find()) {
+                String argStr = m.group(1);
+                if (argStr == null || argStr.equals("")) {
+                    return new MemoryInstruction(t.getOpCode());
+                }
+                int arg = Integer.parseInt(argStr);
+                return new MemoryInstruction(t.getOpCode(), arg);
+            }
+        }
+        return new MemoryInstruction(EOF);
     }
 }
