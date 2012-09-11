@@ -217,24 +217,12 @@ public class MemoryModel {
             return;
         }
 
-        int spaceFree = from.spaceFree();
-        if (spaceFree >= evacuees.size()) {
-            // Enough space - just move over the survivors
-            for (MemoryBlock mb : evacuees) {
-                if (!from.tryAdd(mb)) {
-                    System.out.println("Block id " + mb.getBlockId() + " status: " + mb.getStatus() + " failed YG promotion (before flip)");
-                }
-            }
-            return;
-        }
-
-        // If we get here, then we have too many live objects to fit in the
-        // current survivor space
+        // NOTE We always flip survivor spaces on every YG collection
         flipSurvivorSpaces();
         MemoryPool to = currentSurvivorSpace();
-        spaceFree = compactAndEvacuateSrvSpace(from, to);
+        int spaceFree = compactAndEvacuateSrvSpace(from, to);
         if (spaceFree >= evacuees.size()) {
-            // We made enough space - move the survivors into the new to space
+            // We have enough space - move the survivors into the new to space
             for (MemoryBlock mb : evacuees) {
                 if (!to.tryAdd(mb)) {
                     System.out.println("Block id " + mb.getBlockId() + " status: " + mb.getStatus() + " failed YG promotion (after flip)");
@@ -244,10 +232,10 @@ public class MemoryModel {
         }
 
         // If we get here, we need to promote some survivors to tenured
-        System.out.println("Need to collect tenured");
+        System.out.println("Need to prematurely promote");
         for (int gen = TENURING_THRESHOLD; gen > 0; gen--) {
             spaceFree = prematurePromote(gen);
-            if (spaceFree > evacuees.size()) {
+            if (spaceFree >= evacuees.size()) {
                 // We made space - move the survivors into the new to space
                 for (MemoryBlock mb : evacuees) {
                     if (!to.tryAdd(mb)) {
@@ -258,8 +246,8 @@ public class MemoryModel {
             }
         }
 
-
-
+        // If we get here, we didn't clear enough
+        System.out.println("Didn't clear enough with premature promotion");
     }
 
     /**
@@ -289,32 +277,31 @@ public class MemoryModel {
 
     /**
      * Walk through the current survivor space, and promote everything which has
-     * this generation or higher
+     * this generation or higher. This does not leave the pool empty, and so
+     * does not reset. Returns the total space available in the pool at exit.
      *
      * @param genPromoted
      */
     private int prematurePromote(int genPromoted) {
         MemoryPool from = currentSurvivorSpace();
-        int spaceFreed = 0;
         for (int i = 0; i < from.width(); i++) {
             INNER:
             for (int j = 0; j < from.height(); j++) {
                 MemoryBlockView mbv = from.getValue(i, j);
                 if (mbv.getStatus() == MemoryStatus.ALLOCATED) {
                     MemoryBlock alive = mbv.getBlock();
+                    
                     if (alive.generation() >= genPromoted) {
                         alive.mark();
                         if (tenured.tryAdd(alive)) {
                             // Remove from Survivor spaces
                             mbv.setBlock(factory.getFreeBlock());
-                            spaceFreed++;
                             continue INNER;
                         } else {
                             tenured.compact();
                             if (tenured.tryAdd(alive)) {
                                 // Remove from Survivor spaces
                                 mbv.setBlock(factory.getFreeBlock());
-                                spaceFreed++;
                                 continue INNER;
                             } else {
                                 throw new RuntimeException("OOME at " + i + ", " + j);
@@ -324,8 +311,7 @@ public class MemoryModel {
                 }
             }
         }
-        from.reset();
-        return spaceFreed;
+        return from.spaceFree();
     }
 
     private void moveToTenured(List<MemoryBlock> evacuees) {

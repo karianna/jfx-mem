@@ -37,6 +37,13 @@ public class AllocatingThread implements Callable<Void> {
 
                 switch (ins.getOp()) {
                     case NOP:
+                        // Now we can have no-ops with a parameter for sleeping
+                        try {
+                            long sleepMs = ins.getParam();
+                            Thread.sleep(sleepMs);
+                        } catch (InterruptedException ex) {
+                            isShutdown = true;
+                        }
                         break;
                     case ALLOC:
                     case LARGE_ALLOC:
