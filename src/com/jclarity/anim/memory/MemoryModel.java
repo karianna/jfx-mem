@@ -1,6 +1,8 @@
 package com.jclarity.anim.memory;
 
 import com.jclarity.anim.memory.MemoryBlock.MemoryBlockFactory;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
@@ -121,7 +123,7 @@ public class MemoryModel {
 
             // Can't do anything in Eden, must collect
             youngCollection();
-            
+
             // Eden is now reset, can allocate at offset 0 on current TLAB
             eden[0][threadToCurrentTLAB.get(0)].getValue().setBlock(mb);
         } finally {
@@ -140,17 +142,15 @@ public class MemoryModel {
         System.out.println("Killed " + id);
     }
 
-    private void resetEden() {
-        for (int i = 0; i < wEden; i++) {
-            for (int j = 0; j < height; j++) {
-                eden[i][j].getValue().setBlock(factory.getFreeBlock());
-            }
-        }
-    }
-
-    private void resetSrv(ObjectProperty<MemoryBlockView>[][] blocks) {
+    /**
+     * Reset a pool to completely free state
+     * @param blocks
+     * @param width
+     * @param height 
+     */
+    private void resetPool(ObjectProperty<MemoryBlockView>[][] blocks, int width, int height) {
         for (int i = 0; i < wSrv; i++) {
-            for (int j = 0; j < height / 2; j++) {
+            for (int j = 0; j < height; j++) {
                 blocks[i][j].getValue().setBlock(factory.getFreeBlock());
             }
         }
@@ -185,13 +185,13 @@ public class MemoryModel {
                     // Next two can't happen
                     case FREE:
                     default:
-                        System.out.println("Block with status of: " + mb.getStatus() + " detected in Eden at " + i + ", " + j);
+                        System.out.println("Block id "+ mb.getBlockId() +" with status of: " + mb.getStatus() + " detected in Eden at " + i + ", " + j);
                 }
             }
         }
 
         // Now reset all of Eden to FREE state
-        resetEden();
+        resetPool(eden, wEden, height);
 
         // Reset threadToCurrentTLAB
         // Handles multiple allocating threads
@@ -233,7 +233,12 @@ public class MemoryModel {
         isS1Current = !isS1Current;
     }
 
-    // FIXME Handle Tenured
+    /**
+     * Try to add a block (from a survivor space, or during a tenured compaction) to tenured
+     *
+     * @param mb
+     * @return
+     */
     private boolean tryToAddToTenured(MemoryBlock mb) {
         for (int i = 0; i < wOld; i++) {
             for (int j = 0; j < height; j++) {
@@ -264,7 +269,29 @@ public class MemoryModel {
                 }
             }
         }
-        resetSrv(from);
+        resetPool(from, wSrv, height / 2);
+    }
+
+    private void compactTenured() {
+        final List<MemoryBlock> evacuees = new ArrayList<>();
+        
+        for (int i = 0; i < wOld; i++) {
+            for (int j = 0; j < height; j++) {
+                if (tenured[i][j].getValue().getStatus() == MemoryStatus.ALLOCATED) {
+                    MemoryBlock alive = tenured[i][j].getValue().getBlock();
+                    alive.mark();
+                    evacuees.add(alive);
+                }
+            }
+        }
+        // At this point, we have all the live blocks still in tenured
+        resetPool(tenured, wOld, height);
+        for (MemoryBlock mb : evacuees) {
+            // This should always succeed - we never have more in evacuees than 
+            // will fit into tenured
+            tryToAddToTenured(mb);
+        }
+        
     }
 
     /**
@@ -287,9 +314,15 @@ public class MemoryModel {
                             from[i][j].getValue().setBlock(factory.getFreeBlock());
                             continue INNER;
                         } else {
-                            throw new RuntimeException("OOME at " + i + ", " + j);
+                            compactTenured();
+                            if (tryToAddToTenured(alive)) {
+                                // Remove from Survivor spaces
+                                from[i][j].getValue().setBlock(factory.getFreeBlock());
+                                continue INNER;
+                            } else {
+                                throw new RuntimeException("OOME at " + i + ", " + j);
+                            }
                         }
-
                     }
                 }
             }
