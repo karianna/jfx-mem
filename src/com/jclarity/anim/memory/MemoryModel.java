@@ -36,6 +36,7 @@ public class MemoryModel {
     private static final int RUN_LENGTH = 200;
     private final MemoryBlockFactory factory = MemoryBlockFactory.getInstance();
     private final MemoryBlock[] allocList;
+    private int allocMax = 0;
     private boolean isS1Current = false;
 
     public MemoryPool getEden() {
@@ -52,6 +53,14 @@ public class MemoryModel {
 
     public MemoryPool getTenured() {
         return tenured;
+    }
+
+    private MemoryPool currentSurvivorSpace() {
+        return (isS1Current ? s1 : s2);
+    }
+
+    private void flipSurvivorSpaces() {
+        isS1Current = !isS1Current;
     }
 
     public MemoryModel(int wEden_, int wSrv_, int wOld_, int height_) {
@@ -73,7 +82,6 @@ public class MemoryModel {
         threadToCurrentTLAB.put(0, 0);
     }
 
-    // FIXME Move this to an Eden subclass of MemoryPool
     /**
      * This method allocates a new block in Eden
      *
@@ -83,7 +91,8 @@ public class MemoryModel {
 
         try {
             MemoryBlock mb = factory.getBlock();
-            allocList[mb.getBlockId()] = mb;
+            allocMax = mb.getBlockId();
+            allocList[allocMax] = mb;
 
             // FIXME Single allocating thread
             for (int i = 0; i < wEden; i++) {
@@ -128,28 +137,22 @@ public class MemoryModel {
     }
 
     /**
-     * This class models the state of an ongoing Young generational collection
+     * Perform a young gen collection
      */
-    private class YGCollectionContext {
-
-        private boolean prematurePromote = false;
-        private boolean hasFlippedSrvSpaces = false;
-        private int genPromoted = TENURING_THRESHOLD;
-    }
-
     private void youngCollection() {
         System.out.println("Trying a young collection");
 
-        YGCollectionContext ctx = new YGCollectionContext();
+        final List<MemoryBlock> evacuees = new ArrayList<>();
+
         // We need to step through Eden (& implicitly the allocation list)
-        // and promote live objects
-        for (int i = 0; i < wEden; i++) {
-            for (int j = 0; j < height; j++) {
+        // and save live objects for promotion
+        for (int i = 0; i < eden.width(); i++) {
+            for (int j = 0; j < eden.height(); j++) {
                 MemoryBlock mb = eden.getValue(i, j).getBlock();
                 switch (mb.getStatus()) {
                     case ALLOCATED:
                         mb.mark();
-                        moveToSurvivorSpace(ctx, mb);
+                        evacuees.add(mb);
                         break;
                     case DEAD:
                         break;
@@ -160,6 +163,7 @@ public class MemoryModel {
                 }
             }
         }
+        moveToSurvivorSpace(evacuees);
 
         // Now reset all of Eden to FREE state
         eden.reset();
@@ -170,6 +174,72 @@ public class MemoryModel {
             int t = tNum.intValue();
             threadToCurrentTLAB.put(t, t);
         }
+
+        // Walk alloc list & unmark
+        for (int i = 1; i < allocMax; i++) {
+            allocList[i].unmark();
+        }
+    }
+
+    /**
+     *
+     * @param evacuees
+     */
+    private void moveToSurvivorSpace(List<MemoryBlock> evacuees) {
+        MemoryPool from = currentSurvivorSpace();
+
+
+        // First of all, make sure that we're not so large that we won't fit in
+        // survivor space. This implies an effective tenuring threshold of 1
+        if (evacuees.size() > from.size()) {
+            prematurePromote(1);
+            moveToTenured(evacuees);
+            return;
+        }
+
+        int spaceFree = from.spaceFree();
+        if (spaceFree > evacuees.size()) {
+            // Plenty of space - just move over the survivors
+            for (MemoryBlock mb : evacuees) {
+                if (!from.tryAdd(mb)) {
+                    System.out.println("Block id " + mb.getBlockId() + " status: " + mb.getStatus() + " failed YG promotion (before flip)");
+                }
+            }
+            return;
+        }
+
+        // If we get here, then we have too many live objects to fit in the
+        // current survivor space
+        flipSurvivorSpaces();
+        MemoryPool to = currentSurvivorSpace();
+        spaceFree = compactAndEvacuateSrvSpace(from, to);
+        if (spaceFree > evacuees.size()) {
+            // We made space - move the survivors into the new to space
+            for (MemoryBlock mb : evacuees) {
+                if (!to.tryAdd(mb)) {
+                    System.out.println("Block id " + mb.getBlockId() + " status: " + mb.getStatus() + " failed YG promotion (after flip)");
+                }
+            }
+            return;
+        }
+
+        // If we get here, we need to promote to tenured
+        System.out.println("Need to collect tenured");
+        for (int gen = TENURING_THRESHOLD; gen > 0; gen--) {
+            spaceFree = prematurePromote(gen);
+            if (spaceFree > evacuees.size()) {
+                // We made space - move the survivors into the new to space
+                for (MemoryBlock mb : evacuees) {
+                    if (!to.tryAdd(mb)) {
+                        System.out.println("Block id " + mb.getBlockId() + " status: " + mb.getStatus() + " failed YG promotion (after premature promotion)");
+                    }
+                }
+                return;
+            }
+        }
+
+
+
     }
 
     /**
@@ -196,18 +266,11 @@ public class MemoryModel {
         return true;
     }
 
-    private MemoryPool currentSurvivorSpace() {
-        return (isS1Current ? s1 : s2);
-    }
-
-    private void flipSurvivorSpaces() {
-        isS1Current = !isS1Current;
-    }
-
     /**
-     * This method is used to empty the current survivor space into the other
+     * This method is used to empty the current survivor space into the other.
+     * It returns the number of free slots remaining in the new to space.
      */
-    private boolean compactCurrentSrvSpace(MemoryPool from, MemoryPool to) {
+    private int compactAndEvacuateSrvSpace(MemoryPool from, MemoryPool to) {
         int count = 0;
         for (int i = 0; i < from.width(); i++) {
             for (int j = 0; j < from.height(); j++) {
@@ -216,14 +279,16 @@ public class MemoryModel {
                     MemoryBlock alive = mbv.getBlock();
                     alive.mark();
                     // This cannot fail, as to & from are the same size
-                    to.tryAdd(alive);
+                    if (!to.tryAdd(alive)) {
+                        System.out.println("Block id " + alive.getBlockId() + " status: " + alive.getStatus() + " failed to copy between survivor spaces");
+                    }
                     count++;
                 }
             }
         }
         from.reset();
 
-        return count < from.width() * from.height();
+        return from.width() * from.height() - count;
     }
 
     /**
@@ -232,11 +297,12 @@ public class MemoryModel {
      *
      * @param genPromoted
      */
-    private void prematurePromote(int genPromoted) {
+    private int prematurePromote(int genPromoted) {
         MemoryPool from = currentSurvivorSpace();
-        for (int i = 0; i < wSrv; i++) {
+        int spaceFreed = 0;
+        for (int i = 0; i < from.width(); i++) {
             INNER:
-            for (int j = 0; j < height / 2; j++) {
+            for (int j = 0; j < from.height(); j++) {
                 MemoryBlockView mbv = from.getValue(i, j);
                 if (mbv.getStatus() == MemoryStatus.ALLOCATED) {
                     MemoryBlock alive = mbv.getBlock();
@@ -245,12 +311,14 @@ public class MemoryModel {
                         if (tenured.tryAdd(alive)) {
                             // Remove from Survivor spaces
                             mbv.setBlock(factory.getFreeBlock());
+                            spaceFreed++;
                             continue INNER;
                         } else {
                             tenured.compact();
                             if (tenured.tryAdd(alive)) {
                                 // Remove from Survivor spaces
                                 mbv.setBlock(factory.getFreeBlock());
+                                spaceFreed++;
                                 continue INNER;
                             } else {
                                 throw new RuntimeException("OOME at " + i + ", " + j);
@@ -260,31 +328,14 @@ public class MemoryModel {
                 }
             }
         }
+        return spaceFreed;
     }
 
-    private void moveToSurvivorSpace(YGCollectionContext ctx, MemoryBlock mb) {
-        if (currentSurvivorSpace().tryAdd(mb)) {
-            return;
-        }
-
-        // If we reach here, we haven't found a free block to move our 
-        // surviving Eden object to.
-        if (!ctx.hasFlippedSrvSpaces) {
-            MemoryPool from = currentSurvivorSpace();
-            flipSurvivorSpaces();
-            ctx.hasFlippedSrvSpaces = true;
-            MemoryPool to = currentSurvivorSpace();
-            boolean spaceMade = compactCurrentSrvSpace(from, to);
-
-            // Try to add the surviving Eden object to the flipped srv space
-            if (!ctx.prematurePromote && currentSurvivorSpace().tryAdd(mb)) {
-                return;
+    private void moveToTenured(List<MemoryBlock> evacuees) {
+        for (MemoryBlock mb : evacuees) {
+            if (!tenured.tryAdd(mb)) {
+                throw new RuntimeException("OOME when trying a bulk move to tenured");
             }
-
         }
-        // Uh-oh. Looks like we need to need to do premature promotion
-        // of the next to lowest generation that we've already done
-        ctx.genPromoted--;
-        prematurePromote(ctx.genPromoted);
     }
 }

@@ -97,6 +97,22 @@ public abstract class MemoryPool {
         return height;
     }
 
+    int spaceFree() {
+        int free = 0;
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                if (view[i][j].getValue().getStatus() == MemoryStatus.FREE) {
+                    free++;
+                }
+            }
+        }
+        return free;
+    }
+
+    int size() {
+        return width * height;
+    }
+
     static class Eden extends MemoryPool {
 
         public Eden(int width_, int height_) {
