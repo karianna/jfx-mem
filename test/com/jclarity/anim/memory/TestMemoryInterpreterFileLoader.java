@@ -25,6 +25,30 @@ public class TestMemoryInterpreterFileLoader {
     }
 
     @Test
+    public void lowLevelTestFMIFL() throws InterruptedException {
+        String[] c = {"ALLOC", "ALLOC", "KILL 0", "NOP  25", "KILL 1", "ALLOC", "TENLOC"};
+
+        MemoryInterpreterFileLoader myFl = new MemoryInterpreterFileLoader(Arrays.asList(c));
+        MemoryInstruction mi = myFl.getNextStep();
+        assertEquals(OpCode.ALLOC, mi.getOp());
+        mi = myFl.getNextStep();
+        assertEquals(OpCode.ALLOC, mi.getOp());
+        mi = myFl.getNextStep();
+        assertEquals(OpCode.KILL, mi.getOp());
+        assertEquals(0, mi.getParam());
+        mi = myFl.getNextStep();
+        assertEquals(OpCode.NOP, mi.getOp());
+        assertEquals(25, mi.getParam());
+        mi = myFl.getNextStep();
+        assertEquals(OpCode.KILL, mi.getOp());
+        assertEquals(1, mi.getParam());
+        mi = myFl.getNextStep();
+        assertEquals(OpCode.ALLOC, mi.getOp());
+        mi = myFl.getNextStep();
+        assertEquals(OpCode.LARGE_ALLOC, mi.getOp());
+    }
+
+    @Test
     public void testFMIFLbyStr() throws InterruptedException {
         MemoryModel model = new MemoryModel(2, 1, 2, 4);
         String[] c = {"ALLOC", "ALLOC", "KILL 0"};
@@ -32,8 +56,8 @@ public class TestMemoryInterpreterFileLoader {
         commands.addAll(Arrays.asList(c));
 
         executeScript(model, commands);
-        
-        assertTrue(true); 
+
+        assertTrue(true);
     }
 
     private void executeScript(MemoryModel model, List<String> commands) throws InterruptedException {

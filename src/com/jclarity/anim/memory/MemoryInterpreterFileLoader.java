@@ -64,7 +64,7 @@ public class MemoryInterpreterFileLoader implements IMemoryInterpreter {
 
         NOP("NOP\\s*(\\d+)?", OpCode.NOP),
         ALLOC("ALLOC", OpCode.ALLOC),
-        LARGE_ALLOC("LARGE_ALLOC", OpCode.LARGE_ALLOC),
+        LARGE_ALLOC("TENLOC", OpCode.LARGE_ALLOC),
         KILL("KILL\\s+(\\d+)", OpCode.KILL);
         private final String toMatch;
         private final Pattern p;
@@ -89,10 +89,10 @@ public class MemoryInterpreterFileLoader implements IMemoryInterpreter {
         for (Token t : Token.values()) {
             Matcher m = t.getP().matcher(line);
             if (m.find()) {
-                String argStr = m.group(1);
-                if (argStr == null || argStr.equals("")) {
+                if (m.groupCount() == 0) {
                     return new MemoryInstruction(t.getOpCode());
                 }
+                String argStr = m.group(1);
                 int arg = Integer.parseInt(argStr);
                 return new MemoryInstruction(t.getOpCode(), arg);
             }
