@@ -1,15 +1,9 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.jclarity.anim.memory;
 
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.beans.property.ObjectProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -105,15 +99,15 @@ public class MemoryController implements Initializable {
     /**
      * Setup memory region on the board.
      * 
-     * @param modelArray
+     * @param pool
      * @param columns
      * @param height_
      * @param gridPane 
      */
-    private void initialiseMemoryView(ObjectProperty<MemoryBlockView>[][] modelArray, int columns, int height_, GridPane gridPane) {
+    private void initialiseMemoryView(MemoryPool pool, int columns, int height_, GridPane gridPane) {
         for(int i=0; i < columns; i++) {
             for(int j=0; j < height_; j++) {
-                MemoryBlockView block = modelArray[i][j].get();
+                MemoryBlockView block = pool.get(i,j);
                 gridPane.add(PaneBuilder.create().children(block).build(), i, j);
             }
         } 

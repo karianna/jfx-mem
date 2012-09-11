@@ -7,8 +7,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 
 /**
  * This class implements a simple memory model, with a fixed number of rows but
@@ -22,10 +20,11 @@ public class MemoryModel {
     private final int wSrv;
     private final int wOld;
     private final int height;
-    private final ObjectProperty<MemoryBlockView>[][] eden;
-    private final ObjectProperty<MemoryBlockView>[][] s1;
-    private final ObjectProperty<MemoryBlockView>[][] s2;
-    private final ObjectProperty<MemoryBlockView>[][] tenured;
+    private final MemoryPool eden;
+    private final MemoryPool s1;
+    private final MemoryPool s2;
+    private final MemoryPool tenured;
+
     // FIXME We also need to model multiple TLABs
     private final ConcurrentMap<Integer, Integer> threadToCurrentTLAB = new ConcurrentHashMap<>();
     private final Lock edenLock = new ReentrantLock();
@@ -33,23 +32,23 @@ public class MemoryModel {
     private static final int TENURING_THRESHOLD = 4;
     // FIXME Constant used to control lenght of run. Ick.
     private static final int RUN_LENGTH = 200;
-    private MemoryBlockFactory factory = MemoryBlockFactory.getInstance();
+    private final MemoryBlockFactory factory = MemoryBlockFactory.getInstance();
     private final MemoryBlock[] allocList;
     private boolean isS1Current = false;
 
-    public ObjectProperty<MemoryBlockView>[][] getEden() {
+    public MemoryPool getEden() {
         return eden;
     }
 
-    public ObjectProperty<MemoryBlockView>[][] getS1() {
+    public MemoryPool getS1() {
         return s1;
     }
 
-    public ObjectProperty<MemoryBlockView>[][] getS2() {
+    public MemoryPool getS2() {
         return s2;
     }
 
-    public ObjectProperty<MemoryBlockView>[][] getTenured() {
+    public MemoryPool getTenured() {
         return tenured;
     }
 
@@ -59,10 +58,10 @@ public class MemoryModel {
         wOld = wOld_;
         height = height_;
 
-        eden = createMemoryBlockModel(wEden, height);
-        s1 = createMemoryBlockModel(wSrv, height / 2);
-        s2 = createMemoryBlockModel(wSrv, height / 2);
-        tenured = createMemoryBlockModel(wOld, height);
+        eden = new MemoryPool(wEden, height);
+        s1 = new MemoryPool(wSrv, height / 2);
+        s2 = new MemoryPool(wSrv, height / 2);
+        tenured = new MemoryPool(wOld, height);
 
         int nblocks = height * (wEden * +2 * wSrv + wOld);
 
@@ -72,17 +71,7 @@ public class MemoryModel {
         threadToCurrentTLAB.put(0, 0);
     }
 
-    private ObjectProperty<MemoryBlockView>[][] createMemoryBlockModel(int width, int height_) {
-        ObjectProperty<MemoryBlockView>[][] modelArray = new ObjectProperty[width][height_];
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height_; j++) {
-                modelArray[i][j] = new SimpleObjectProperty<>();
-                modelArray[i][j].set(new MemoryBlockView());
-            }
-        }
-        return modelArray;
-    }
-
+    // FIXME Move this to an Eden subclass of MemoryPool
     /**
      * This method allocates a new block in Eden
      *
@@ -99,8 +88,9 @@ public class MemoryModel {
             INNER:
             for (int i = 0; i < wEden; i++) {
                 // Must use getValue() to actually see bindable behaviour
-                if (eden[i][threadToCurrentTLAB.get(0)].getValue().getStatus() == MemoryStatus.FREE) {
-                    eden[i][threadToCurrentTLAB.get(0)].getValue().setBlock(mb);
+                MemoryBlockView mbv = eden.getValue(i, threadToCurrentTLAB.get(0));
+                if (mbv.getStatus() == MemoryStatus.FREE) {
+                    mbv.setBlock(mb);
                     hasAllocated = true;
                     break INNER;
                 }
@@ -116,16 +106,15 @@ public class MemoryModel {
 
             if (gotNewTLAB) {
                 // Have new TLAB, know we can allocate at offset 0
-                eden[0][threadToCurrentTLAB.get(0)].getValue().setBlock(mb);
+                eden.getValue(0, threadToCurrentTLAB.get(0)).setBlock(mb);
                 return;
             }
-
 
             // Can't do anything in Eden, must collect
             youngCollection();
 
             // Eden is now reset, can allocate at offset 0 on current TLAB
-            eden[0][threadToCurrentTLAB.get(0)].getValue().setBlock(mb);
+            eden.getValue(0, threadToCurrentTLAB.get(0)).setBlock(mb);
         } finally {
             edenLock.unlock();
         }
@@ -140,20 +129,6 @@ public class MemoryModel {
     void destroy(int id) {
         allocList[id].die();
         System.out.println("Killed " + id);
-    }
-
-    /**
-     * Reset a pool to completely free state
-     * @param blocks
-     * @param width
-     * @param height 
-     */
-    private void resetPool(ObjectProperty<MemoryBlockView>[][] blocks, int width, int height) {
-        for (int i = 0; i < wSrv; i++) {
-            for (int j = 0; j < height; j++) {
-                blocks[i][j].getValue().setBlock(factory.getFreeBlock());
-            }
-        }
     }
 
     /**
@@ -174,7 +149,7 @@ public class MemoryModel {
         // and promote live objects
         for (int i = 0; i < wEden; i++) {
             for (int j = 0; j < height; j++) {
-                MemoryBlock mb = eden[i][j].getValue().getBlock();
+                MemoryBlock mb = eden.getValue(i,j).getBlock();
                 switch (mb.getStatus()) {
                     case ALLOCATED:
                         mb.mark();
@@ -185,13 +160,13 @@ public class MemoryModel {
                     // Next two can't happen
                     case FREE:
                     default:
-                        System.out.println("Block id "+ mb.getBlockId() +" with status of: " + mb.getStatus() + " detected in Eden at " + i + ", " + j);
+                        System.out.println("Block id " + mb.getBlockId() + " with status of: " + mb.getStatus() + " detected in Eden at " + i + ", " + j);
                 }
             }
         }
 
         // Now reset all of Eden to FREE state
-        resetPool(eden, wEden, height);
+        eden.reset();
 
         // Reset threadToCurrentTLAB
         // Handles multiple allocating threads
@@ -225,7 +200,7 @@ public class MemoryModel {
         return true;
     }
 
-    private ObjectProperty<MemoryBlockView>[][] currentSurvivorSpace() {
+    private MemoryPool currentSurvivorSpace() {
         return (isS1Current ? s1 : s2);
     }
 
@@ -233,65 +208,51 @@ public class MemoryModel {
         isS1Current = !isS1Current;
     }
 
-    /**
-     * Try to add a block (from a survivor space, or during a tenured compaction) to tenured
-     *
-     * @param mb
-     * @return
-     */
-    private boolean tryToAddToTenured(MemoryBlock mb) {
-        for (int i = 0; i < wOld; i++) {
-            for (int j = 0; j < height; j++) {
-                if (tenured[i][j].getValue().getStatus() == MemoryStatus.FREE) {
-                    tenured[i][j].getValue().setBlock(mb);
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
+    
     /**
      * This method is used to empty the current survivor space into the other
      */
     private void compactCurrentSrvSpace(YGCollectionContext ctx) {
-        ObjectProperty<MemoryBlockView>[][] from = currentSurvivorSpace();
+        MemoryPool from = currentSurvivorSpace();
         flipSurvivorSpaces();
         for (int i = 0; i < wSrv; i++) {
             for (int j = 0; j < height / 2; j++) {
-                if (from[i][j].getValue().getStatus() == MemoryStatus.ALLOCATED) {
-                    MemoryBlock alive = from[i][j].getValue().getBlock();
+                MemoryBlockView mbv = from.getValue(i, j);
+                if (mbv.getStatus() == MemoryStatus.ALLOCATED) {
+                    MemoryBlock alive = mbv.getBlock();
                     alive.mark();
-                    boolean moved = tryToAddToCurrentSrvSpace(alive);
+                    boolean moved = currentSurvivorSpace().tryAdd(alive);
                     if (!moved) {
                         ctx.prematurePromote = true;
                     }
                 }
             }
         }
-        resetPool(from, wSrv, height / 2);
+        from.reset();
     }
 
+    // FIXME Move to a Tenured subclass of MemoryPool when available
     private void compactTenured() {
         final List<MemoryBlock> evacuees = new ArrayList<>();
-        
+
         for (int i = 0; i < wOld; i++) {
             for (int j = 0; j < height; j++) {
-                if (tenured[i][j].getValue().getStatus() == MemoryStatus.ALLOCATED) {
-                    MemoryBlock alive = tenured[i][j].getValue().getBlock();
+                MemoryBlockView mbv = tenured.getValue(i, j);
+                if (mbv.getStatus() == MemoryStatus.ALLOCATED) {
+                    MemoryBlock alive = mbv.getBlock();
                     alive.mark();
                     evacuees.add(alive);
                 }
             }
         }
         // At this point, we have all the live blocks still in tenured
-        resetPool(tenured, wOld, height);
+        tenured.reset();
         for (MemoryBlock mb : evacuees) {
             // This should always succeed - we never have more in evacuees than 
             // will fit into tenured
-            tryToAddToTenured(mb);
+            tenured.tryAdd(mb);
         }
-        
+
     }
 
     /**
@@ -301,23 +262,24 @@ public class MemoryModel {
      * @param genPromoted
      */
     private void prematurePromote(int genPromoted) {
-        ObjectProperty<MemoryBlockView>[][] from = currentSurvivorSpace();
+        MemoryPool from = currentSurvivorSpace();
         for (int i = 0; i < wSrv; i++) {
             INNER:
             for (int j = 0; j < height / 2; j++) {
-                if (from[i][j].getValue().getStatus() == MemoryStatus.ALLOCATED) {
-                    MemoryBlock alive = from[i][j].getValue().getBlock();
+                MemoryBlockView mbv = from.getValue(i,j);
+                if (mbv.getStatus() == MemoryStatus.ALLOCATED) {
+                    MemoryBlock alive = mbv.getBlock();
                     if (alive.generation() >= genPromoted) {
                         alive.mark();
-                        if (tryToAddToTenured(alive)) {
+                        if (tenured.tryAdd(alive)) {
                             // Remove from Survivor spaces
-                            from[i][j].getValue().setBlock(factory.getFreeBlock());
+                            mbv.setBlock(factory.getFreeBlock());
                             continue INNER;
                         } else {
                             compactTenured();
-                            if (tryToAddToTenured(alive)) {
+                            if (tenured.tryAdd(alive)) {
                                 // Remove from Survivor spaces
-                                from[i][j].getValue().setBlock(factory.getFreeBlock());
+                                mbv.setBlock(factory.getFreeBlock());
                                 continue INNER;
                             } else {
                                 throw new RuntimeException("OOME at " + i + ", " + j);
@@ -329,27 +291,8 @@ public class MemoryModel {
         }
     }
 
-    /**
-     * This method tries to add a MemoryBlock to the current survivor space
-     *
-     * @param mb
-     * @return
-     */
-    private boolean tryToAddToCurrentSrvSpace(MemoryBlock mb) {
-        ObjectProperty<MemoryBlockView>[][] to = currentSurvivorSpace();
-        for (int i = 0; i < wSrv; i++) {
-            for (int j = 0; j < height / 2; j++) {
-                if (to[i][j].getValue().getStatus() == MemoryStatus.FREE) {
-                    to[i][j].getValue().setBlock(mb);
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     private void moveToSurvivorSpace(YGCollectionContext ctx, MemoryBlock mb) {
-        if (tryToAddToCurrentSrvSpace(mb)) {
+        if (currentSurvivorSpace().tryAdd(mb)) {
             return;
         }
 
@@ -359,7 +302,7 @@ public class MemoryModel {
             compactCurrentSrvSpace(ctx);
             ctx.hasFlippedSrvSpaces = true;
             // Try to add the surviving Eden object to the flipped srv space
-            if (!ctx.prematurePromote && tryToAddToCurrentSrvSpace(mb)) {
+            if (!ctx.prematurePromote && currentSurvivorSpace().tryAdd(mb)) {
                 return;
             }
 
