@@ -211,6 +211,12 @@ public class MemoryModel {
         // First of all, make sure that we're not so large that we won't fit in
         // survivor space. This implies an effective tenuring threshold of 1
         if (evacuees.size() > from.size()) {
+            // We need to check that we'll fit in tenured.
+            // If we won't, we need to compact tenured first off
+            if (evacuees.size() > tenured.spaceFree()) {
+                tenured.compact();
+            }
+            
             prematurePromote(0);
             flipSurvivorSpaces();
             moveToTenured(evacuees);
