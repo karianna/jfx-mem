@@ -157,6 +157,7 @@ public class MemoryModel {
      */
     private void youngCollection() {
         System.out.println("Trying a young collection");
+        // FIXME Sanity check
         if (!selfCheckEden()) {
             throw new RuntimeException("Inconsistent Eden state detected"); 
         }
@@ -207,13 +208,13 @@ public class MemoryModel {
     private void moveToSurvivorSpace(List<MemoryBlock> evacuees) {
         MemoryPool from = currentSurvivorSpace();
 
-
         // First of all, make sure that we're not so large that we won't fit in
         // survivor space. This implies an effective tenuring threshold of 1
         if (evacuees.size() > from.size()) {
             prematurePromote(0);
             flipSurvivorSpaces();
             moveToTenured(evacuees);
+            from.reset();
             return;
         }
 
