@@ -108,6 +108,7 @@ public class MemoryModel {
 
         try {
             MemoryBlock mb = factory.getBlock();
+            mb.setCreatedID(youngGcCount);
             allocMax = mb.getBlockId();
             allocList[allocMax] = mb;
 
@@ -116,7 +117,6 @@ public class MemoryModel {
                 // Must use getValue() to actually see bindable behaviour
                 MemoryBlockView mbv = eden.getValue(i, threadToCurrentTLAB.get(0));
                 if (mbv.getStatus() == MemoryStatus.FREE) {
-                    mb.setCreatedID(youngGcCount);
                     mbv.setBlock(mb);
                     return;
                 }
