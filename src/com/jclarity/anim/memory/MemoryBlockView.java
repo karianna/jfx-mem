@@ -2,6 +2,9 @@ package com.jclarity.anim.memory;
 
 import com.jclarity.anim.memory.model.MemoryBlock;
 import com.jclarity.anim.memory.model.MemoryStatus;
+import javafx.animation.FadeTransition;
+import javafx.animation.FillTransition;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -14,6 +17,7 @@ import javafx.scene.shape.StrokeType;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import javafx.util.Duration;
 
 /**
  *
@@ -66,11 +70,13 @@ public class MemoryBlockView extends StackPane {
         text.setFill(Color.WHITE);
 
         getChildren().addAll(box, text);
+        
     }
 
-    public void die() {
+    public void die() {      
         memoryStatus.setValue(MemoryStatus.DEAD);
         setTextOnBox("X");
+        animateTransition();
     }
 
     public MemoryBlock getBlock() {
@@ -83,7 +89,13 @@ public class MemoryBlockView extends StackPane {
         String txt = mb.generation() > 0 ? ""+ mb.generation() : "";
         setTextOnBox(txt);
         memoryStatus.setValue(mb.getStatus());
+        animateTransition();
     }
+    
+    private void animateTransition() {
+       Platform.runLater(new CustomMemoryBlockViewTransition(this));
+    }
+
 
     private void setTextOnBox(String text_) {
         text.setText(text_);
