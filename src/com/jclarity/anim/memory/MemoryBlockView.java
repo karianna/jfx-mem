@@ -47,7 +47,7 @@ public class MemoryBlockView extends StackPane {
                 MemoryStatus.FREE);
 
         box.styleProperty().bind(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.FREE))
-                .then("-fx-fill: gray ")
+                .then("-fx-fill: gray")
                 .otherwise(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.ALLOCATED))
                 .then("-fx-fill: limegreen")
                 .otherwise(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.DEAD))
@@ -59,9 +59,9 @@ public class MemoryBlockView extends StackPane {
         box.setStroke(Color.web("black"));
         box.setStrokeWidth(2);
         box.setArcWidth(15);
-        box.setArcHeight(15); 
+        box.setArcHeight(15);
         
-        text = new Text("1");
+        text = new Text("");
         text.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         text.setFill(Color.WHITE);
         
@@ -70,6 +70,7 @@ public class MemoryBlockView extends StackPane {
     
     void die() {
         memoryStatus.setValue(MemoryStatus.DEAD);
+        setTextOnBox("X");
     }
     
     public MemoryBlock getBlock() { return mine; }
@@ -77,7 +78,16 @@ public class MemoryBlockView extends StackPane {
     void setBlock(MemoryBlock mb) {
         mine = mb;
         mb.setView(this);
+        if(mb.getCreatedID() != null) {
+            setTextOnBox(mb.getCreatedID().toString());
+        } else {
+            setTextOnBox("");
+        }
         memoryStatus.setValue(mb.getStatus());
+    }
+
+    private void setTextOnBox(String text_) {
+        text.setText(text_);
     }
     
 }

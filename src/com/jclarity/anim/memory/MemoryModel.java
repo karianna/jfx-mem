@@ -32,6 +32,9 @@ public class MemoryModel {
     private final MemoryBlock[] allocList;
     private int allocMax = 0;
     private boolean isS1Current = false;
+    
+    //TODO Ben Sanity check me
+    private volatile int youngGcCount=0;
 
     public MemoryPool getEden() {
         return eden;
@@ -113,6 +116,7 @@ public class MemoryModel {
                 // Must use getValue() to actually see bindable behaviour
                 MemoryBlockView mbv = eden.getValue(i, threadToCurrentTLAB.get(0));
                 if (mbv.getStatus() == MemoryStatus.FREE) {
+                    mb.setCreatedID(youngGcCount);
                     mbv.setBlock(mb);
                     return;
                 }
@@ -199,6 +203,7 @@ public class MemoryModel {
         for (int i = 1; i < allocMax; i++) {
             allocList[i].unmark();
         }
+        youngGcCount++;
     }
 
     /**
