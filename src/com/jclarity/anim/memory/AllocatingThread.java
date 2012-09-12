@@ -19,10 +19,14 @@ public class AllocatingThread implements Callable<Void> {
 
     private final IMemoryInterpreter memoryInterpreter;
     private final MemoryModel model;
+    private final int threadId;
     private volatile boolean isShutdown = false;
 
     public AllocatingThread(IMemoryInterpreter memoryInterpreter_, MemoryModel model_) {
         model = model_;
+        threadId = model.getNextThreadId();
+        // If we can't get a threadId, this thread won't start
+        if (threadId < 0) isShutdown = true;
         memoryInterpreter = memoryInterpreter_;
     }
 
@@ -53,7 +57,7 @@ public class AllocatingThread implements Callable<Void> {
                     case LARGE_ALLOC:
                         // FIXME Need to deal with a large allocation differently
                         // Maybe allocate two blocks - directly in Tenured?
-                        model.allocate();
+                        model.allocate(threadId);
                         break;
                     case KILL:
                         model.destroy(ins.getParam());

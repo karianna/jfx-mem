@@ -24,7 +24,7 @@ public class MemoryModel {
     private final MemoryPool s1;
     private final MemoryPool s2;
     private final Tenured tenured;
-    // FIXME We also need to model multiple TLABs
+    // Needed to model multiple allocating threads and TLABs
     private final ConcurrentMap<Integer, Integer> threadToCurrentTLAB = new ConcurrentHashMap<>();
     private final Lock edenLock = new ReentrantLock();
     // This will become a variable
@@ -35,9 +35,6 @@ public class MemoryModel {
     private final MemoryBlock[] allocList;
     private int allocMax = 0;
     private boolean isS1Current = false;
-    
-    //TODO Ben Sanity check me
-    private volatile int youngGcCount=0;
 
     public MemoryPool getEden() {
         return eden;
@@ -83,9 +80,6 @@ public class MemoryModel {
         int nblocks = height * (wEden + 2 * wSrv + wOld);
 
         allocList = new MemoryBlock[nblocks * RUN_LENGTH];
-
-        // FIXME Just two thread for now
-        threadToCurrentTLAB.put(0, 0);
     }
 
     /**
@@ -113,10 +107,45 @@ public class MemoryModel {
     }
 
     /**
+     * Gets the next thread ID for an allocating thread. Returns -1 if there are
+     * no more threads that could be used
+     *
+     * @return
+     */
+    synchronized int getNextThreadId() {
+        int nextKey = threadToCurrentTLAB.size();
+        if (nextKey >= eden.height()) {
+            return -1;
+        }
+        int nextVal = nextKey;
+
+        // This is to deal with the case where new threads join after some have 
+        // already started allocating
+        for (Integer i : threadToCurrentTLAB.values()) {
+            if (i.intValue() >= nextVal) {
+                nextVal = 1 + i.intValue();
+            }
+        }
+        // In this case, we should be able to allocate a new thread, but need
+        // to wrap around & use a low value
+        if (nextKey >= eden.height()) {
+            for (int i = 0; i < eden.height(); i++) {
+                if (!threadToCurrentTLAB.values().contains(i)) {
+                    nextVal = i;
+                    break;
+                }
+            }
+        }
+
+        threadToCurrentTLAB.put(nextKey, nextVal);
+        return nextKey;
+    }
+
+    /**
      * This method allocates a new block in Eden
      *
      */
-    void allocate() {
+    void allocate(final int threadId) {
         edenLock.lock();
 
         try {
@@ -124,10 +153,9 @@ public class MemoryModel {
             allocMax = mb.getBlockId();
             allocList[allocMax] = mb;
 
-            // FIXME Single allocating thread
             for (int i = 0; i < eden.width(); i++) {
                 // Must use getValue() to actually see bindable behaviour
-                MemoryBlockView mbv = eden.getValue(i, threadToCurrentTLAB.get(0));
+                MemoryBlockView mbv = eden.getValue(i, threadToCurrentTLAB.get(threadId));
                 if (mbv.getStatus() == MemoryStatus.FREE) {
                     mbv.setBlock(mb);
                     return;
@@ -135,13 +163,12 @@ public class MemoryModel {
             }
 
             // Now try allocating a new TLAB for this thread
-            // FIXME Single allocating thread
-            boolean gotNewTLAB = setNewTLABForThread(0);
+            boolean gotNewTLAB = setNewTLABForThread(threadId);
             System.out.println("Trying to get new TLAB: " + gotNewTLAB);
 
             if (gotNewTLAB) {
                 // Have new TLAB, know we can allocate at offset 0
-                eden.getValue(0, threadToCurrentTLAB.get(0)).setBlock(mb);
+                eden.getValue(0, threadToCurrentTLAB.get(threadId)).setBlock(mb);
                 return;
             }
 
@@ -149,7 +176,7 @@ public class MemoryModel {
             youngCollection();
 
             // Eden is now reset, can allocate at offset 0 on current TLAB
-            eden.getValue(0, threadToCurrentTLAB.get(0)).setBlock(mb);
+            eden.getValue(0, threadToCurrentTLAB.get(threadId)).setBlock(mb);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -164,8 +191,11 @@ public class MemoryModel {
      * @param id
      */
     void destroy(int id) {
-        allocList[id].die();
-        System.out.println("Killed " + id);
+        MemoryBlock mb = allocList[id];
+        if (mb != null) {
+            mb.die();
+            System.out.println("Killed " + id);
+        }
     }
 
     /**
@@ -215,7 +245,6 @@ public class MemoryModel {
         for (int i = 1; i < allocMax; i++) {
             allocList[i].unmark();
         }
-        youngGcCount++;
     }
 
     /**
