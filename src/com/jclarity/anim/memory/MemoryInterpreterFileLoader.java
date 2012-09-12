@@ -44,12 +44,9 @@ public class MemoryInterpreterFileLoader implements IMemoryInterpreter {
         }
 
         // Process next line in the file
-        String line = it.next();
-        if (line == null) {
-            return new MemoryInstruction(EOF);
-        }
+        if (!it.hasNext()) return new MemoryInstruction(EOF);
 
-        return parseLine(line);
+        return parseLine(it.next());
     }
 
     private void loadLines() {
