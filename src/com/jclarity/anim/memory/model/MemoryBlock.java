@@ -1,5 +1,6 @@
-package com.jclarity.anim.memory;
+package com.jclarity.anim.memory.model;
 
+import com.jclarity.anim.memory.MemoryBlockView;
 import com.jclarity.anim.memory.model.MemoryStatus;
 
 /**
@@ -49,12 +50,12 @@ public class MemoryBlock {
         view = view_;
     }
 
-    void die() {
+    public void die() {
         memoryStatus = MemoryStatus.DEAD;
         view.die();
     }
 
-    MemoryStatus getStatus() {
+    public MemoryStatus getStatus() {
         return memoryStatus;
     }
 

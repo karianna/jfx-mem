@@ -1,5 +1,6 @@
 package com.jclarity.anim.memory;
 
+import com.jclarity.anim.memory.model.MemoryBlock;
 import com.jclarity.anim.memory.model.MemoryStatus;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
@@ -46,7 +47,7 @@ public class MemoryBlockView extends Region {
         setPrefSize(30, 30);
     }
     
-    void die() {
+    public void die() {
         memoryStatus.setValue(MemoryStatus.DEAD);
     }
     

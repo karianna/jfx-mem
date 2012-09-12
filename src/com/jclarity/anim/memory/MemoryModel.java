@@ -1,8 +1,9 @@
 package com.jclarity.anim.memory;
 
+import com.jclarity.anim.memory.model.MemoryBlock;
 import com.jclarity.anim.memory.model.MemoryPool;
 import com.jclarity.anim.memory.model.MemoryStatus;
-import com.jclarity.anim.memory.MemoryBlock.MemoryBlockFactory;
+import com.jclarity.anim.memory.model.MemoryBlock.MemoryBlockFactory;
 import com.jclarity.anim.memory.model.MemoryPool.Tenured;
 import java.util.ArrayList;
 import java.util.List;
