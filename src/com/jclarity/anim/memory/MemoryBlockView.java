@@ -4,12 +4,15 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.StrokeType;
 
 /**
  *
  * @author kittylyst
  */
-public class MemoryBlockView extends Region {
+public class MemoryBlockView extends Rectangle {
     
     
     private ObjectProperty<MemoryStatus> memoryStatus;
@@ -30,19 +33,25 @@ public class MemoryBlockView extends Region {
     }
 
     public MemoryBlockView() {
+        super(30, 30, Color.web("gray"));
+        
         memoryStatus = new SimpleObjectProperty<>(this, "owner", 
                 MemoryStatus.FREE);
 
         styleProperty().bind(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.FREE))
-                .then("-fx-background-color: radial-gradient(radius 100%, white .1, gray .9, darkgray 1)")
+                .then("-fx-fill: gray ")
                 .otherwise(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.ALLOCATED))
-                .then("-fx-background-color: radial-gradient(radius 100%, blue .4, gray .9, darkgray 1)")
+                .then("-fx-fill: limegreen")
                 .otherwise(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.DEAD))
-                .then("-fx-background-color: radial-gradient(radius 100%, red .1, gray .9, darkgray 1)")
+                .then("-fx-fill: darkred")
                 .otherwise("")
-                .concat("; -fx-background-radius: 1000em; -fx-background-insets: 5"))));
+                .concat(";"))));
         
-        setPrefSize(30, 30);
+        setStrokeType(StrokeType.INSIDE);
+        setStroke(Color.web("black"));
+        setStrokeWidth(2);
+        setArcWidth(15);
+        setArcHeight(15); 
     }
     
     void die() {
