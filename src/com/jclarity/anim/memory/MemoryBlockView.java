@@ -3,17 +3,24 @@ package com.jclarity.anim.memory;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.event.EventType;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.StrokeType;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 
 /**
  *
  * @author kittylyst
  */
-public class MemoryBlockView extends Rectangle {
+public class MemoryBlockView extends StackPane {
+    private Rectangle box;
     
+    private Text text;
     
     private ObjectProperty<MemoryStatus> memoryStatus;
     
@@ -33,12 +40,13 @@ public class MemoryBlockView extends Rectangle {
     }
 
     public MemoryBlockView() {
-        super(30, 30, Color.web("gray"));
+        super();
+        box = new Rectangle(30, 30, Color.web("gray"));
         
         memoryStatus = new SimpleObjectProperty<>(this, "owner", 
                 MemoryStatus.FREE);
 
-        styleProperty().bind(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.FREE))
+        box.styleProperty().bind(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.FREE))
                 .then("-fx-fill: gray ")
                 .otherwise(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.ALLOCATED))
                 .then("-fx-fill: limegreen")
@@ -47,11 +55,17 @@ public class MemoryBlockView extends Rectangle {
                 .otherwise("")
                 .concat(";"))));
         
-        setStrokeType(StrokeType.INSIDE);
-        setStroke(Color.web("black"));
-        setStrokeWidth(2);
-        setArcWidth(15);
-        setArcHeight(15); 
+        box.setStrokeType(StrokeType.INSIDE);
+        box.setStroke(Color.web("black"));
+        box.setStrokeWidth(2);
+        box.setArcWidth(15);
+        box.setArcHeight(15); 
+        
+        text = new Text("1");
+        text.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        text.setFill(Color.WHITE);
+        
+        getChildren().addAll(box, text);
     }
     
     void die() {
