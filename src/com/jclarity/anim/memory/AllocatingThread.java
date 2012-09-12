@@ -4,6 +4,7 @@
  */
 package com.jclarity.anim.memory;
 
+import com.jclarity.anim.memory.model.OOMException;
 import java.util.concurrent.Callable;
 
 /**
@@ -70,7 +71,12 @@ public class AllocatingThread implements Callable<Void> {
                         break INTERP;
                 }
                 ins = memoryInterpreter.getNextStep();
+            } catch (OOMException oome) {
+                isShutdown = true;
+                System.out.println("OOME: "+ oome.getMessage());
+                oome.printStackTrace();
             } catch (Exception e) {
+                // FIXME DEBUG ONLY
                 e.printStackTrace();
             }
             try {

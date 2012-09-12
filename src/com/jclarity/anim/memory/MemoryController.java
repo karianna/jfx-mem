@@ -23,7 +23,7 @@ public class MemoryController implements Initializable {
     private MemoryModel model;
     // NOTE The survivor spaces are half the height of the Eden & tenured spaces
     private int height = 8;
-    // FIXME Move MemoryInterpreter to an AllocatingThread factory
+    // FIXME Needs to be injected
     private IMemoryInterpreter memoryInterpreter;
     private final ExecutorService srv = Executors.newScheduledThreadPool(2);
     @FXML
@@ -78,7 +78,9 @@ public class MemoryController implements Initializable {
                 memoryInterpreter = new SimpleTemporaryMemoryInterpreter();
                 break;
         }
-        AllocatingThread at0 = new AllocatingThread(memoryInterpreter, model);
+//        AllocatingThread at0 = new AllocatingThread(memoryInterpreter, model);
+        AllocatingThread at0 = new AllocatingThread(new RandomMemoryInterpreter(0.2), model);
+
         srv.submit(at0);
         AllocatingThread at1 = new AllocatingThread(memoryInterpreter, model);
         // FIXME Enabling a second allocating thread causes NPE after first YG

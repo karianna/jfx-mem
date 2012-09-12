@@ -5,6 +5,7 @@ import com.jclarity.anim.memory.model.MemoryPool;
 import com.jclarity.anim.memory.model.MemoryStatus;
 import com.jclarity.anim.memory.model.MemoryBlock.MemoryBlockFactory;
 import com.jclarity.anim.memory.model.MemoryPool.Tenured;
+import com.jclarity.anim.memory.model.OOMException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -177,8 +178,9 @@ public class MemoryModel {
 
             // Eden is now reset, can allocate at offset 0 on current TLAB
             eden.getValue(0, threadToCurrentTLAB.get(threadId)).setBlock(mb);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (OOMException oome) {
+            System.out.println("OOME: " + oome.getMessage());
+            throw oome;
         } finally {
             edenLock.unlock();
         }
@@ -191,10 +193,19 @@ public class MemoryModel {
      * @param id
      */
     void destroy(int id) {
-        MemoryBlock mb = allocList[id];
-        if (mb != null) {
-            mb.die();
-            System.out.println("Killed " + id);
+        edenLock.lock();
+
+        try {
+
+            MemoryBlock mb = allocList[id];
+            if (mb != null) {
+                mb.die();
+                System.out.println("Killed " + id);
+            } else {
+                System.out.println("Tried to Kill empty block " + id);
+            }
+        } finally {
+            edenLock.unlock();
         }
     }
 
@@ -203,10 +214,6 @@ public class MemoryModel {
      */
     private void youngCollection() {
         System.out.println("Trying a young collection");
-        // FIXME Sanity check
-        if (!selfCheckEden()) {
-            throw new RuntimeException("Inconsistent Eden state detected");
-        }
 
         final List<MemoryBlock> evacuees = new ArrayList<>();
 
@@ -225,7 +232,6 @@ public class MemoryModel {
                     // Next two can't happen
                     case FREE:
                     default:
-                        System.out.println("Block id " + mb.getBlockId() + " with status of: " + mb.getStatus() + " detected in Eden at " + i + ", " + j);
                 }
             }
         }
@@ -370,15 +376,8 @@ public class MemoryModel {
     private void moveToTenured(List<MemoryBlock> evacuees) {
         for (MemoryBlock mb : evacuees) {
             if (!tenured.tryAdd(mb)) {
-                throw new RuntimeException("OOME when trying a bulk move to tenured");
+                throw new OOMException("OOME when trying a bulk move to tenured");
             }
         }
-    }
-
-    private boolean selfCheckEden() {
-        if (eden.spaceFree() > 0) {
-            return false;
-        }
-        return true;
     }
 }
