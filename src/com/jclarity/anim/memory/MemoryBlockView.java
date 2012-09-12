@@ -1,5 +1,6 @@
 package com.jclarity.anim.memory;
 
+import com.jclarity.anim.memory.model.MemoryStatus;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -51,7 +52,7 @@ public class MemoryBlockView extends Region {
     
     public MemoryBlock getBlock() { return mine; }
 
-    void setBlock(MemoryBlock mb) {
+    public void setBlock(MemoryBlock mb) {
         mine = mb;
         mb.setView(this);
         memoryStatus.setValue(mb.getStatus());

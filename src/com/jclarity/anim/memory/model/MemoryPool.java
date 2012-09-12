@@ -1,6 +1,9 @@
-package com.jclarity.anim.memory;
+package com.jclarity.anim.memory.model;
 
+import com.jclarity.anim.memory.MemoryBlock;
+import com.jclarity.anim.memory.model.MemoryStatus;
 import com.jclarity.anim.memory.MemoryBlock.MemoryBlockFactory;
+import com.jclarity.anim.memory.MemoryBlockView;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.beans.property.ObjectProperty;
@@ -40,7 +43,7 @@ public class MemoryPool {
      * @param mb
      * @return
      */
-    boolean tryAdd(MemoryBlock mb) {
+    public boolean tryAdd(MemoryBlock mb) {
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 if (view[i][j].getValue().getStatus() == MemoryStatus.FREE) {
@@ -59,7 +62,7 @@ public class MemoryPool {
      * @param j
      * @return
      */
-    MemoryBlockView getValue(int i, int j) {
+    public MemoryBlockView getValue(int i, int j) {
         return view[i][j].getValue();
     }
 
@@ -70,14 +73,14 @@ public class MemoryPool {
      * @param j
      * @return
      */
-    MemoryBlockView get(int i, int j) {
+    public MemoryBlockView get(int i, int j) {
         return view[i][j].get();
     }
 
     /**
      * Resets this pool to completely free state
      */
-    void reset() {
+    public void reset() {
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 view[i][j].getValue().setBlock(factory.getFreeBlock());
@@ -85,15 +88,15 @@ public class MemoryPool {
         }
     }
 
-    int width() {
+    public int width() {
         return width;
     }
 
-    int height() {
+    public int height() {
         return height;
     }
 
-    int spaceFree() {
+    public int spaceFree() {
         int free = 0;
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
@@ -105,17 +108,17 @@ public class MemoryPool {
         return free;
     }
 
-    int size() {
+    public int size() {
         return width * height;
     }
 
-    static class Tenured extends MemoryPool {
+    public static class Tenured extends MemoryPool {
 
         public Tenured(int width_, int height_) {
             super(width_, height_);
         }
 
-        void compact() {
+        public void compact() {
             System.out.println("Trying a tenured compaction");
 
             final List<MemoryBlock> evacuees = new ArrayList<>();

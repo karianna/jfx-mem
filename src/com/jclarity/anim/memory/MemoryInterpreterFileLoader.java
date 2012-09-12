@@ -1,6 +1,7 @@
 package com.jclarity.anim.memory;
 
-import static com.jclarity.anim.memory.OpCode.*;
+import com.jclarity.anim.memory.model.OpCode;
+import static com.jclarity.anim.memory.model.OpCode.*;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -57,8 +58,10 @@ public class MemoryInterpreterFileLoader implements IMemoryInterpreter {
         }
     }
 
+    /**
+     * Used to model tokens from the stream, and patterns which represent them
+     */
     private static enum Token {
-
         NOP("NOP\\s*(\\d+)?", OpCode.NOP),
         ALLOC("ALLOC", OpCode.ALLOC),
         LARGE_ALLOC("TENLOC", OpCode.LARGE_ALLOC),

@@ -1,5 +1,7 @@
 package com.jclarity.anim.memory;
 
+import com.jclarity.anim.memory.model.OpCode;
+
 /**
  * The point of this class is to allocate a deterministic / predictable amount 
  * of memory.

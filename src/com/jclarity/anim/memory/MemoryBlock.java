@@ -1,5 +1,7 @@
 package com.jclarity.anim.memory;
 
+import com.jclarity.anim.memory.model.MemoryStatus;
+
 /**
  * This is a model class
  *
@@ -79,7 +81,7 @@ public class MemoryBlock {
          *
          * @return
          */
-        MemoryBlock getFreeBlock() {
+        public MemoryBlock getFreeBlock() {
             MemoryBlock out = new MemoryBlock(0);
             out.memoryStatus = MemoryStatus.FREE;
             return out;

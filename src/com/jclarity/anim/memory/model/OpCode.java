@@ -1,10 +1,10 @@
-package com.jclarity.anim.memory;
+package com.jclarity.anim.memory.model;
 
 /**
  *
  * @author kittylyst
  */
-enum OpCode {
+public enum OpCode {
     NOP,
     ALLOC,
     LARGE_ALLOC,

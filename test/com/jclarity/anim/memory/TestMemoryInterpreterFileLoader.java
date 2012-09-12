@@ -1,12 +1,12 @@
 package com.jclarity.anim.memory;
 
+import com.jclarity.anim.memory.model.OpCode;
 import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -40,7 +40,8 @@ public class TestMemoryInterpreterFileLoader {
 
     @Test
     public void testFMIFLbyStr() throws InterruptedException {
-        MemoryModel model = new MemoryModel(2, 1, 2, 4); // Eden = 8; S1, S2 = 2; Tenured = 8
+        // Eden = 8; S1, S2 = 2; Tenured = 8
+        MemoryModel model = new MemoryModel(2, 1, 2, 4);
         List<String> commands = new ArrayList<>();
 
         String[] c = {"ALLOC", "ALLOC", "KILL 0", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "KILL 2"};
@@ -48,14 +49,16 @@ public class TestMemoryInterpreterFileLoader {
 
         executeScript(model, commands);
 
-        assertEquals(6, model.getEden().spaceFree()); // Eden contains 2 live cells
-        assertEquals(2, model.getS1().spaceFree()); // S1 is empty
-        assertEquals(2, model.getS2().spaceFree()); // S2 is empty
-        assertEquals(1, model.getTenured().spaceFree()); // Tenured contains 6 live & 1 dead cell
+        // 2L blocks in Eden, 0 in S1, 0 in S2, 6L + 1D in Tenured - 18 allocated
+        assertEquals(6, model.getEden().spaceFree()); 
+        assertEquals(2, model.getS1().spaceFree()); 
+        assertEquals(2, model.getS2().spaceFree()); 
+        assertEquals(1, model.getTenured().spaceFree());
     }
 
     @Test
     public void testFMIFLWTenuredbyStr() throws InterruptedException {
+        // Eden = 8; S1, S2 = 2; Tenured = 8
         MemoryModel model = new MemoryModel(2, 1, 2, 4);
         List<String> commands = new ArrayList<>();
 
@@ -65,7 +68,7 @@ public class TestMemoryInterpreterFileLoader {
 
         String[] d = {"KILL 2", "KILL 3", "KILL 4", "KILL 5", "ALLOC", "ALLOC", "ALLOC", "ALLOC"};
         commands.addAll(Arrays.asList(d));
-        // 6L blocks in Eden, 0 in S1, 0 in S2, 3L + 5D in Tenured - 14 allocated
+        // 6L blocks in Eden, 0 in S1, 0 in S2, 2L + 5D in Tenured - 14 allocated
 
         String[] e = {"KILL 11", "KILL 12", "KILL 13", "NOP 5", "ALLOC", "ALLOC", "ALLOC", "ALLOC"};
         commands.addAll(Arrays.asList(e));

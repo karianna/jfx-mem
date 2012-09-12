@@ -1,5 +1,7 @@
 package com.jclarity.anim.memory;
 
+import com.jclarity.anim.memory.model.OpCode;
+
 /**
  * A model class which holds an operation and a parameter
  *
