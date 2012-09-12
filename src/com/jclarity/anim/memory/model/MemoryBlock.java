@@ -63,7 +63,7 @@ public class MemoryBlock {
      * Helper factory to ensure the properties of the MemoryBlockView are OK.
      */
     public static class MemoryBlockFactory {
-        private int seq = 0;
+        private volatile int seq = 0;
 
         public MemoryBlockFactory() {
         }

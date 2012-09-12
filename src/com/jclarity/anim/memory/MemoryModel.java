@@ -31,7 +31,7 @@ public class MemoryModel {
     private static final int TENURING_THRESHOLD = 4;
     // FIXME Constant used to control lenght of run. Ick.
     private static final int RUN_LENGTH = 200;
-    private final MemoryBlockFactory factory = new MemoryBlockFactory();
+    private final MemoryBlockFactory factory;
     private final MemoryBlock[] allocList;
     private int allocMax = 0;
     private boolean isS1Current = false;
@@ -60,18 +60,28 @@ public class MemoryModel {
         isS1Current = !isS1Current;
     }
 
-    public MemoryModel(int wEden, int wSrv, int wOld, int height) {
-
-        eden = new MemoryPool(wEden, height);
-        s1 = new MemoryPool(wSrv, height / 2);
-        s2 = new MemoryPool(wSrv, height / 2);
-        tenured = new Tenured(wOld, height);
+    /**
+     * We need to pass in a Factory for memory blocks which must be a singleton
+     * (so that multiple allocation threads all see the same allocList[]
+     *
+     * @param fact
+     * @param wEden
+     * @param wSrv
+     * @param wOld
+     * @param height
+     */
+    public MemoryModel(MemoryBlockFactory fact, int wEden, int wSrv, int wOld, int height) {
+        factory = fact;
+        eden = new MemoryPool(fact, wEden, height);
+        s1 = new MemoryPool(fact, wSrv, height / 2);
+        s2 = new MemoryPool(fact, wSrv, height / 2);
+        tenured = new Tenured(fact, wOld, height);
 
         int nblocks = height * (wEden + 2 * wSrv + wOld);
 
         allocList = new MemoryBlock[nblocks * RUN_LENGTH];
 
-        // FIXME Just single thread for now
+        // FIXME Just two thread for now
         threadToCurrentTLAB.put(0, 0);
     }
 
@@ -162,9 +172,9 @@ public class MemoryModel {
         System.out.println("Trying a young collection");
         // FIXME Sanity check
         if (!selfCheckEden()) {
-            throw new RuntimeException("Inconsistent Eden state detected"); 
+            throw new RuntimeException("Inconsistent Eden state detected");
         }
-            
+
         final List<MemoryBlock> evacuees = new ArrayList<>();
 
         // We need to step through Eden (& implicitly the allocation list)
@@ -219,7 +229,7 @@ public class MemoryModel {
             if (evacuees.size() > tenured.spaceFree()) {
                 tenured.compact();
             }
-            
+
             prematurePromote(0);
             flipSurvivorSpaces();
             moveToTenured(evacuees);
@@ -300,7 +310,7 @@ public class MemoryModel {
                 MemoryBlockView mbv = from.getValue(i, j);
                 if (mbv.getStatus() == MemoryStatus.ALLOCATED) {
                     MemoryBlock alive = mbv.getBlock();
-                    
+
                     if (alive.generation() >= genPromoted) {
                         alive.mark();
                         if (tenured.tryAdd(alive)) {
@@ -333,7 +343,9 @@ public class MemoryModel {
     }
 
     private boolean selfCheckEden() {
-        if (eden.spaceFree() > 0) return false;
+        if (eden.spaceFree() > 0) {
+            return false;
+        }
         return true;
     }
 }

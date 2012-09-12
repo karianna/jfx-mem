@@ -1,5 +1,6 @@
 package com.jclarity.anim.memory;
 
+import com.jclarity.anim.memory.model.MemoryBlock;
 import com.jclarity.anim.memory.model.OpCode;
 import static org.junit.Assert.*;
 import java.util.ArrayList;
@@ -41,7 +42,7 @@ public class TestMemoryInterpreterFileLoader {
     @Test
     public void testFMIFLbyStr() throws InterruptedException {
         // Eden = 8; S1, S2 = 2; Tenured = 8
-        MemoryModel model = new MemoryModel(2, 1, 2, 4);
+        MemoryModel model = new MemoryModel(new MemoryBlock.MemoryBlockFactory(), 2, 1, 2, 4);
         List<String> commands = new ArrayList<>();
 
         String[] c = {"ALLOC", "ALLOC", "KILL 0", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "KILL 2"};
@@ -59,7 +60,7 @@ public class TestMemoryInterpreterFileLoader {
     @Test
     public void testFMIFLWTenuredbyStr() throws InterruptedException {
         // Eden = 8; S1, S2 = 2; Tenured = 8
-        MemoryModel model = new MemoryModel(2, 1, 2, 4);
+        MemoryModel model = new MemoryModel(new MemoryBlock.MemoryBlockFactory(),  2, 1, 2, 4);
         List<String> commands = new ArrayList<>();
 
         String[] c = {"ALLOC", "ALLOC", "KILL 0", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "KILL 1"};

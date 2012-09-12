@@ -1,5 +1,6 @@
 package com.jclarity.anim.memory;
 
+import com.jclarity.anim.memory.model.MemoryBlock;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,7 +15,7 @@ public class TestSingleAllocThreadSimple {
     
     @Test
     public void testSimpleAlloc() throws InterruptedException {
-        MemoryModel model = new MemoryModel(3, 6, 8, 8);
+        MemoryModel model = new MemoryModel(new MemoryBlock.MemoryBlockFactory(), 3, 6, 8, 8);
         CountDownLatch cdl = new CountDownLatch(1);
         MemoryPatternMaker maker = new MemoryPatternMaker(cdl, 1000);
         AllocatingThread at = new AllocatingThread(maker, model);

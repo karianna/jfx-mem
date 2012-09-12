@@ -1,5 +1,6 @@
 package com.jclarity.anim.memory;
 
+import com.jclarity.anim.memory.model.MemoryBlock;
 import com.jclarity.anim.memory.model.MemoryPool;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -60,7 +61,7 @@ public class MemoryController implements Initializable {
         Integer survivorColumns = (Integer) survivorColumnsCombo.getSelectionModel().getSelectedItem();
         Integer tenuredColumns = (Integer) tenuredColumnsCombo.getSelectionModel().getSelectedItem();
 
-        model = new MemoryModel(edenColumns, survivorColumns, tenuredColumns, height);
+        model = new MemoryModel(new MemoryBlock.MemoryBlockFactory(), edenColumns, survivorColumns, tenuredColumns, height);
 
         //Eden setup on the board 
         initialiseMemoryView(model.getEden(), edenGridPane);

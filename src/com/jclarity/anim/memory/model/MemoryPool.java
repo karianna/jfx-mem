@@ -16,7 +16,7 @@ public class MemoryPool {
     protected final int width;
     protected final int height;
     private final ObjectProperty<MemoryBlockView>[][] view;
-    private final MemoryBlockFactory factory = new MemoryBlockFactory();
+    private final MemoryBlockFactory factory;
 
     /**
      * Standard constructor
@@ -24,7 +24,8 @@ public class MemoryPool {
      * @param width_
      * @param height_
      */
-    public MemoryPool(int width_, int height_) {
+    public MemoryPool(MemoryBlockFactory fact, int width_, int height_) {
+        factory = fact;
         width = width_;
         height = height_;
         view = new ObjectProperty[width][height];
@@ -113,8 +114,8 @@ public class MemoryPool {
 
     public static class Tenured extends MemoryPool {
 
-        public Tenured(int width_, int height_) {
-            super(width_, height_);
+        public Tenured(MemoryBlockFactory fact_, int width_, int height_) {
+            super(fact_, width_, height_);
         }
 
         public void compact() {
