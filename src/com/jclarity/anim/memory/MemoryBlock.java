@@ -60,15 +60,9 @@ public class MemoryBlock {
      * Helper factory to ensure the properties of the MemoryBlockView are OK.
      */
     public static class MemoryBlockFactory {
-
-        private final static MemoryBlockFactory inst = new MemoryBlockFactory();
         private int seq = 0;
 
-        private MemoryBlockFactory() {
-        }
-
-        public static MemoryBlockFactory getInstance() {
-            return inst;
+        public MemoryBlockFactory() {
         }
 
         /**

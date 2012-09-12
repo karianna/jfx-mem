@@ -28,7 +28,7 @@ public class MemoryModel {
     private static final int TENURING_THRESHOLD = 4;
     // FIXME Constant used to control lenght of run. Ick.
     private static final int RUN_LENGTH = 200;
-    private final MemoryBlockFactory factory = MemoryBlockFactory.getInstance();
+    private final MemoryBlockFactory factory = new MemoryBlockFactory();
     private final MemoryBlock[] allocList;
     private int allocMax = 0;
     private boolean isS1Current = false;

@@ -1,5 +1,6 @@
 package com.jclarity.anim.memory;
 
+import com.jclarity.anim.memory.MemoryBlock.MemoryBlockFactory;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.beans.property.ObjectProperty;
@@ -13,7 +14,7 @@ public class MemoryPool {
     protected final int width;
     protected final int height;
     private final ObjectProperty<MemoryBlockView>[][] view;
-    private final MemoryBlock.MemoryBlockFactory factory = MemoryBlock.MemoryBlockFactory.getInstance();
+    private final MemoryBlockFactory factory = new MemoryBlockFactory();
 
     /**
      * Standard constructor

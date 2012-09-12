@@ -14,16 +14,6 @@ import org.junit.Test;
  */
 public class TestMemoryInterpreterFileLoader {
 
-    ExecutorService srv;
-
-    @Before
-    public void setup() {
-        if (srv != null) {
-            srv.shutdownNow();
-        }
-        srv = Executors.newSingleThreadExecutor();
-    }
-
     @Test
     public void lowLevelTestFMIFL() throws InterruptedException {
         String[] c = {"ALLOC", "ALLOC", "KILL 0", "NOP  25", "KILL 1", "ALLOC", "TENLOC"};
@@ -50,13 +40,38 @@ public class TestMemoryInterpreterFileLoader {
 
     @Test
     public void testFMIFLbyStr() throws InterruptedException {
-        MemoryModel model = new MemoryModel(2, 1, 2, 4);
-        String[] c = {"ALLOC", "ALLOC", "KILL 0", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "KILL 2"};
+        MemoryModel model = new MemoryModel(2, 1, 2, 4); // Eden = 8; S1, S2 = 2; Tenured = 8
         List<String> commands = new ArrayList<>();
+
+        String[] c = {"ALLOC", "ALLOC", "KILL 0", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "KILL 2"};
         commands.addAll(Arrays.asList(c));
 
         executeScript(model, commands);
 
+        assertEquals(6, model.getEden().spaceFree()); // Eden contains 2 live cells
+        assertEquals(2, model.getS1().spaceFree()); // S1 is empty
+        assertEquals(2, model.getS2().spaceFree()); // S2 is empty
+        assertEquals(1, model.getTenured().spaceFree()); // Tenured contains 6 live & 1 dead cell
+    }
+
+    @Test
+    public void testFMIFLWTenuredbyStr() throws InterruptedException {
+        MemoryModel model = new MemoryModel(2, 1, 2, 4);
+        List<String> commands = new ArrayList<>();
+
+        String[] c = {"ALLOC", "ALLOC", "KILL 0", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "KILL 1"};
+        commands.addAll(Arrays.asList(c));
+        // 2L blocks in Eden, 0 in S1, 0 in S2, 6L + 1D in Tenured - 10 allocated
+
+        String[] d = {"KILL 2", "KILL 3", "KILL 4", "KILL 5", "ALLOC", "ALLOC", "ALLOC", "ALLOC"};
+        commands.addAll(Arrays.asList(d));
+        // 6L blocks in Eden, 0 in S1, 0 in S2, 3L + 5D in Tenured - 14 allocated
+
+        String[] e = {"KILL 11", "KILL 12", "KILL 13", "NOP 5", "ALLOC", "ALLOC", "ALLOC", "ALLOC"};
+        commands.addAll(Arrays.asList(e));
+        // 2L blocks in Eden, 0 in S1, 0 in S2, 7L in Tenured - 18 allocated
+
+        executeScript(model, commands);
         assertEquals(6, model.getEden().spaceFree());
         assertEquals(2, model.getS1().spaceFree());
         assertEquals(2, model.getS2().spaceFree());
@@ -66,9 +81,11 @@ public class TestMemoryInterpreterFileLoader {
     private void executeScript(MemoryModel model, List<String> commands) throws InterruptedException {
         MemoryInterpreterFileLoader myFl = new MemoryInterpreterFileLoader(commands);
         AllocatingThread at = new AllocatingThread(myFl, model);
+        ExecutorService srv = Executors.newSingleThreadExecutor();
         srv.submit(at);
         while (!at.isShutdown()) {
             Thread.sleep(250);
         }
+        srv.shutdownNow();
     }
 }
