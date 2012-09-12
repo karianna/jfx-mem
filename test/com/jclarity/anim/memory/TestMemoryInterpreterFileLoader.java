@@ -51,13 +51,16 @@ public class TestMemoryInterpreterFileLoader {
     @Test
     public void testFMIFLbyStr() throws InterruptedException {
         MemoryModel model = new MemoryModel(2, 1, 2, 4);
-        String[] c = {"ALLOC", "ALLOC", "KILL 0"};
+        String[] c = {"ALLOC", "ALLOC", "KILL 0", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "ALLOC", "KILL 2"};
         List<String> commands = new ArrayList<>();
         commands.addAll(Arrays.asList(c));
 
         executeScript(model, commands);
 
-        assertTrue(true);
+        assertEquals(6, model.getEden().spaceFree());
+        assertEquals(2, model.getS1().spaceFree());
+        assertEquals(2, model.getS2().spaceFree());
+        assertEquals(1, model.getTenured().spaceFree());
     }
 
     private void executeScript(MemoryModel model, List<String> commands) throws InterruptedException {
