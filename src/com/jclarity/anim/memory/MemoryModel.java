@@ -121,7 +121,6 @@ public class MemoryModel {
 
         try {
             MemoryBlock mb = factory.getBlock();
-            mb.setCreatedID(youngGcCount);
             allocMax = mb.getBlockId();
             allocList[allocMax] = mb;
 

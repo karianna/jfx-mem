@@ -20,32 +20,30 @@ import javafx.scene.text.Text;
  * @author kittylyst
  */
 public class MemoryBlockView extends StackPane {
+
     private Rectangle box;
-    
     private Text text;
-    
     private ObjectProperty<MemoryStatus> memoryStatus;
-    
     private MemoryBlock mine;
-    
+
     public ObjectProperty<MemoryStatus> memoryStatus() {
         return memoryStatus;
     }
-    
+
     public MemoryStatus getStatus() {
         return memoryStatus.get();
     }
-    
+
     public void setMemoryStatus(MemoryStatus status) {
-        
+
         memoryStatus.set(status);
     }
 
     public MemoryBlockView() {
         super();
         box = new Rectangle(30, 30, Color.web("gray"));
-        
-        memoryStatus = new SimpleObjectProperty<>(this, "owner", 
+
+        memoryStatus = new SimpleObjectProperty<>(this, "owner",
                 MemoryStatus.FREE);
 
         box.styleProperty().bind(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.FREE))
@@ -56,40 +54,38 @@ public class MemoryBlockView extends StackPane {
                 .then("-fx-fill: darkred")
                 .otherwise("")
                 .concat(";"))));
-        
+
         box.setStrokeType(StrokeType.INSIDE);
         box.setStroke(Color.web("black"));
         box.setStrokeWidth(2);
         box.setArcWidth(15);
         box.setArcHeight(15);
-        
+
         text = new Text("");
         text.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         text.setFill(Color.WHITE);
-        
+
         getChildren().addAll(box, text);
     }
-    
+
     public void die() {
         memoryStatus.setValue(MemoryStatus.DEAD);
         setTextOnBox("X");
     }
-    
-    public MemoryBlock getBlock() { return mine; }
+
+    public MemoryBlock getBlock() {
+        return mine;
+    }
 
     public void setBlock(MemoryBlock mb) {
         mine = mb;
         mb.setView(this);
-        if(mb.getCreatedID() != null) {
-            setTextOnBox(mb.getCreatedID().toString());
-        } else {
-            setTextOnBox("");
-        }
+        String txt = mb.generation() > 0 ? ""+ mb.generation() : "";
+        setTextOnBox(txt);
         memoryStatus.setValue(mb.getStatus());
     }
 
     private void setTextOnBox(String text_) {
         text.setText(text_);
     }
-    
 }
