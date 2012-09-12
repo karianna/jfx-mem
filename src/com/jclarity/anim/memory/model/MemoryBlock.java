@@ -1,7 +1,6 @@
 package com.jclarity.anim.memory.model;
 
 import com.jclarity.anim.memory.MemoryBlockView;
-import com.jclarity.anim.memory.model.MemoryStatus;
 
 /**
  * This is a model class
@@ -13,8 +12,8 @@ public class MemoryBlock {
     private final int id;
     private volatile int generation = 0;
     private volatile boolean touched = false;
-    private MemoryBlockView view;
-    private MemoryStatus memoryStatus = MemoryStatus.ALLOCATED;
+    private volatile MemoryBlockView view;
+    private volatile MemoryStatus memoryStatus = MemoryStatus.ALLOCATED;
 
     private MemoryBlock(int id_) {
         id = id_;
