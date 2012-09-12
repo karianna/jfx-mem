@@ -12,6 +12,7 @@ public class MemoryBlock {
     // Used to denote position of an allocated block in memory alloc list
     private final int id;
     private volatile int generation = 0;
+    private Integer createdID;
     private boolean touched = false;
     private MemoryBlockView view;
     private MemoryStatus memoryStatus = MemoryStatus.ALLOCATED;
@@ -36,6 +37,14 @@ public class MemoryBlock {
 
     public synchronized void unmark() {
         touched = false;
+    }
+    
+    public void setCreatedID(int createdID_) {
+        createdID = createdID_;
+    }
+    
+    public Integer getCreatedID() {
+        return createdID;
     }
 
     public int getBlockId() {

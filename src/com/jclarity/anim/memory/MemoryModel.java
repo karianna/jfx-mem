@@ -35,6 +35,9 @@ public class MemoryModel {
     private final MemoryBlock[] allocList;
     private int allocMax = 0;
     private boolean isS1Current = false;
+    
+    //TODO Ben Sanity check me
+    private volatile int youngGcCount=0;
 
     public MemoryPool getEden() {
         return eden;
@@ -118,6 +121,7 @@ public class MemoryModel {
 
         try {
             MemoryBlock mb = factory.getBlock();
+            mb.setCreatedID(youngGcCount);
             allocMax = mb.getBlockId();
             allocList[allocMax] = mb;
 
@@ -212,6 +216,7 @@ public class MemoryModel {
         for (int i = 1; i < allocMax; i++) {
             allocList[i].unmark();
         }
+        youngGcCount++;
     }
 
     /**
