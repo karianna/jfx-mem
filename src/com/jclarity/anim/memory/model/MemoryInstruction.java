@@ -1,6 +1,4 @@
-package com.jclarity.anim.memory;
-
-import com.jclarity.anim.memory.model.OpCode;
+package com.jclarity.anim.memory.model;
 
 /**
  * A model class which holds an operation and a parameter
@@ -11,13 +9,14 @@ public class MemoryInstruction {
 
     private final OpCode op;
     private final int p;
+    private int threadId;
 
-    MemoryInstruction(OpCode opCode, int i) {
-        op = opCode;
-        p = i;
+    public MemoryInstruction(OpCode op_, int p_) {
+        op = op_;
+        p = p_;
     }
 
-    MemoryInstruction(OpCode opCode) {
+    public MemoryInstruction(OpCode opCode) {
         op = opCode;
         p = 0;
     }
@@ -29,4 +28,9 @@ public class MemoryInstruction {
     public int getParam() {
         return p;
     }
+
+    public void setThreadId(int threadId_) {
+        threadId = threadId_;
+    }
+    public int getThreadId() { return threadId; }
 }

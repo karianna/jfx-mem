@@ -1,5 +1,6 @@
 package com.jclarity.anim.memory;
 
+import com.jclarity.anim.memory.model.MemoryInstruction;
 import com.jclarity.anim.memory.model.MemoryBlock;
 import com.jclarity.anim.memory.model.MemoryPool;
 import com.jclarity.anim.memory.model.MemoryStatus;
@@ -8,10 +9,15 @@ import com.jclarity.anim.memory.model.MemoryPool.Tenured;
 import com.jclarity.anim.memory.model.OOMException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This class implements a simple memory model, with a fixed number of rows but
@@ -19,7 +25,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * @author boxcat
  */
-public class MemoryModel {
+public class MemoryModel implements Runnable {
 
     private final MemoryPool eden;
     private final MemoryPool s1;
@@ -27,7 +33,7 @@ public class MemoryModel {
     private final Tenured tenured;
     // Needed to model multiple allocating threads and TLABs
     private final ConcurrentMap<Integer, Integer> threadToCurrentTLAB = new ConcurrentHashMap<>();
-    private final Lock edenLock = new ReentrantLock();
+    private final BlockingQueue<MemoryInstruction> instrQueue = new LinkedBlockingQueue<>();
     // This will become a variable
     private static final int TENURING_THRESHOLD = 4;
     // FIXME Constant used to control lenght of run. Ick.
@@ -36,6 +42,7 @@ public class MemoryModel {
     private final MemoryBlock[] allocList;
     private int allocMax = 0;
     private boolean isS1Current = false;
+    private boolean isShutdown = false;
 
     public MemoryPool getEden() {
         return eden;
@@ -147,8 +154,6 @@ public class MemoryModel {
      *
      */
     void allocate(final int threadId) {
-        edenLock.lock();
-
         try {
             MemoryBlock mb = factory.getBlock();
             allocMax = mb.getBlockId();
@@ -181,8 +186,6 @@ public class MemoryModel {
         } catch (OOMException oome) {
             System.out.println("OOME: " + oome.getMessage());
             throw oome;
-        } finally {
-            edenLock.unlock();
         }
     }
 
@@ -193,19 +196,12 @@ public class MemoryModel {
      * @param id
      */
     void destroy(int id) {
-        edenLock.lock();
-
-        try {
-
-            MemoryBlock mb = allocList[id];
-            if (mb != null) {
-                mb.die();
-                System.out.println("Killed " + id);
-            } else {
-                System.out.println("Tried to Kill empty block " + id);
-            }
-        } finally {
-            edenLock.unlock();
+        MemoryBlock mb = allocList[id];
+        if (mb != null) {
+            mb.die();
+            System.out.println("Killed " + id);
+        } else {
+            System.out.println("Tried to Kill empty block " + id);
         }
     }
 
@@ -222,6 +218,7 @@ public class MemoryModel {
         for (int i = 0; i < eden.width(); i++) {
             for (int j = 0; j < eden.height(); j++) {
                 MemoryBlock mb = eden.getValue(i, j).getBlock();
+
                 switch (mb.getStatus()) {
                     case ALLOCATED:
                         mb.mark();
@@ -377,6 +374,37 @@ public class MemoryModel {
         for (MemoryBlock mb : evacuees) {
             if (!tenured.tryAdd(mb)) {
                 throw new OOMException("OOME when trying a bulk move to tenured");
+            }
+        }
+    }
+
+    BlockingQueue<MemoryInstruction> getQueue() {
+        return instrQueue;
+    }
+
+    @Override
+    public void run() {
+        while (!isShutdown) {
+            try {
+                MemoryInstruction ins = instrQueue.poll(100, TimeUnit.MILLISECONDS);
+                if (ins != null) {
+                    switch (ins.getOp()) {
+                        case ALLOC:
+                        case LARGE_ALLOC:
+                            allocate(ins.getThreadId());
+                            break;
+                        case KILL:
+                            destroy(ins.getParam());
+                            break;
+                        case EOF: // Shouldn't happen cases
+                        case NOP:
+                        default:
+                            isShutdown = true;
+                            break;
+                    }
+                }
+            } catch (InterruptedException ex) {
+                isShutdown = true;
             }
         }
     }

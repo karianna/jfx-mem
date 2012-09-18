@@ -1,5 +1,6 @@
 package com.jclarity.anim.memory;
 
+import com.jclarity.anim.memory.model.MemoryInstruction;
 import com.jclarity.anim.memory.model.MemoryBlock;
 import com.jclarity.anim.memory.model.OpCode;
 import static org.junit.Assert.*;

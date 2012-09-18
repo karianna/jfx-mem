@@ -20,12 +20,12 @@ import javafx.scene.layout.PaneBuilder;
  */
 public class MemoryController implements Initializable {
 
-    private MemoryModel model;
     // NOTE The survivor spaces are half the height of the Eden & tenured spaces
     private int height = 8;
     // FIXME Needs to be injected
     private IMemoryInterpreter memoryInterpreter;
-    private final ExecutorService srv = Executors.newScheduledThreadPool(2);
+    private ExecutorService srv;
+    
     @FXML
     private ComboBox edenColumnsCombo;
     @FXML
@@ -61,8 +61,11 @@ public class MemoryController implements Initializable {
         Integer survivorColumns = (Integer) survivorColumnsCombo.getSelectionModel().getSelectedItem();
         Integer tenuredColumns = (Integer) tenuredColumnsCombo.getSelectionModel().getSelectedItem();
 
-        model = new MemoryModel(new MemoryBlock.MemoryBlockFactory(), edenColumns, survivorColumns, tenuredColumns, height);
-
+        // Create the model
+        final MemoryModel model = new MemoryModel(new MemoryBlock.MemoryBlockFactory(), edenColumns, survivorColumns, tenuredColumns, height);
+        // Setup the thread pool
+        srv = Executors.newScheduledThreadPool(height + 1);
+        
         //Eden setup on the board 
         initialiseMemoryView(model.getEden(), edenGridPane);
         initialiseMemoryView(model.getS1(), s1GridPane);
@@ -86,6 +89,9 @@ public class MemoryController implements Initializable {
         // FIXME Enabling a second allocating thread causes NPE after first YG
         // collection
         srv.submit(at1);
+        
+        // Finally, kick off the model in it's own thread
+        srv.submit(model);
     }
 
     public void haltSimulation() {

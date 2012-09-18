@@ -1,5 +1,6 @@
 package com.jclarity.anim.memory;
 
+import com.jclarity.anim.memory.model.MemoryInstruction;
 import com.jclarity.anim.memory.model.OpCode;
 import static java.lang.Math.random;
 

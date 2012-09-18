@@ -4,7 +4,9 @@
  */
 package com.jclarity.anim.memory;
 
+import com.jclarity.anim.memory.model.MemoryInstruction;
 import com.jclarity.anim.memory.model.OOMException;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 
 /**
@@ -19,12 +21,12 @@ import java.util.concurrent.Callable;
 public class AllocatingThread implements Callable<Void> {
 
     private final IMemoryInterpreter memoryInterpreter;
-    private final MemoryModel model;
+    private final BlockingQueue<MemoryInstruction> bq;
     private final int threadId;
     private volatile boolean isShutdown = false;
 
-    public AllocatingThread(IMemoryInterpreter memoryInterpreter_, MemoryModel model_) {
-        model = model_;
+    public AllocatingThread(IMemoryInterpreter memoryInterpreter_, MemoryModel model) {
+        bq = model.getQueue();
         threadId = model.getNextThreadId();
         // If we can't get a threadId, this thread won't start
         if (threadId < 0) isShutdown = true;
@@ -56,12 +58,12 @@ public class AllocatingThread implements Callable<Void> {
                         break;
                     case ALLOC:
                     case LARGE_ALLOC:
+                    case KILL:    
                         // FIXME Need to deal with a large allocation differently
                         // Maybe allocate two blocks - directly in Tenured?
-                        model.allocate(threadId);
-                        break;
-                    case KILL:
-                        model.destroy(ins.getParam());
+                        ins.setThreadId(threadId);
+                        bq.put(ins);
+//                        model.allocate(threadId);
                         break;
                     case EOF:
                         isShutdown = true;
