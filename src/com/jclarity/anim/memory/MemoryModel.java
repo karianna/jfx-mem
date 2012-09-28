@@ -183,9 +183,10 @@ public class MemoryModel implements Runnable {
 
             // Eden is now reset, can allocate at offset 0 on current TLAB
             eden.getValue(0, threadToCurrentTLAB.get(threadId)).setBlock(mb);
-        } catch (OOMException oome) {
+        } catch (Exception oome) {
+            oome.printStackTrace();
             System.out.println("OOME: " + oome.getMessage());
-            throw oome;
+//            throw oome;
         }
     }
 
@@ -218,7 +219,8 @@ public class MemoryModel implements Runnable {
         for (int i = 0; i < eden.width(); i++) {
             for (int j = 0; j < eden.height(); j++) {
                 MemoryBlock mb = eden.getValue(i, j).getBlock();
-
+                if (mb == null) continue; 
+                
                 switch (mb.getStatus()) {
                     case ALLOCATED:
                         mb.mark();
