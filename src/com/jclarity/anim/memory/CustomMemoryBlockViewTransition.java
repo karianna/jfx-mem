@@ -21,14 +21,14 @@ class CustomMemoryBlockViewTransition implements Runnable {
 
     @Override
     public void run() {
-        FadeTransition fadeOldBlockOut = new FadeTransition(Duration.millis(10), view);
+        FadeTransition fadeOldBlockOut = new FadeTransition(Duration.millis(100), view);
         fadeOldBlockOut.setFromValue(1.0);
         fadeOldBlockOut.setToValue(0.0);
         fadeOldBlockOut.setCycleCount(1);
         fadeOldBlockOut.setAutoReverse(false);
         fadeOldBlockOut.play();
 
-        FadeTransition fadeNewBlockIn = new FadeTransition(Duration.millis(1500), view);
+        FadeTransition fadeNewBlockIn = new FadeTransition(Duration.millis(400), view);
         fadeNewBlockIn.setFromValue(0.0);
         fadeNewBlockIn.setToValue(1.0);
         fadeNewBlockIn.setCycleCount(1);
