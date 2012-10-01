@@ -45,7 +45,7 @@ public class MemoryBlockView extends StackPane {
 
     public MemoryBlockView() {
         super();
-        box = new Rectangle(30, 30, Color.web("gray"));
+        box = new Rectangle(30, 30, Color.web("white"));
 
         memoryStatus = new SimpleObjectProperty<>(this, "owner",
                 MemoryStatus.FREE);
@@ -60,7 +60,7 @@ public class MemoryBlockView extends StackPane {
                 .concat(";"))));
 
         box.setStrokeType(StrokeType.INSIDE);
-        box.setStroke(Color.web("black"));
+        box.setStroke(Color.web("white"));
         box.setStrokeWidth(2);
         box.setArcWidth(15);
         box.setArcHeight(15);

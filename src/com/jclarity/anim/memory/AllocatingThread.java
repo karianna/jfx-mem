@@ -82,7 +82,7 @@ public class AllocatingThread implements Callable<Void> {
                 e.printStackTrace();
             }
             try {
-                Thread.sleep(100);
+                Thread.sleep(500);
             } catch (InterruptedException ex) {
                 isShutdown = true;
             }
