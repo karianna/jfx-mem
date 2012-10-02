@@ -8,24 +8,13 @@
 <?import javafx.geometry.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.jclarity.anim.memory.MemoryController">
-    <Label text="Memory Demo" fx:id="applicationtitle" />
-    <HBox>
-        <ComboBox  fx:id="resourceType">
-            <items>
-                <FXCollections fx:factory="observableArrayList">
-                    <String fx:value="File" />
-                </FXCollections>
-            </items>
-        </ComboBox>
-        <Label text="Path:" />
-        <TextField fx:id="resourcePath" />
-    </HBox>
-    <VBox>
-        <GridPane>
+    <Label text="Memory Demo" fx:id="applicationtitle" alignment="center" prefWidth="1000"/>
+    <VBox prefWidth="1000">
+        <GridPane prefWidth="1000">
             <Label text="Setup Simulation"  />
             <VBox GridPane.rowIndex="1">
                 <HBox>
-                    <Label text="Eden Size:" />
+                    <Label text="Eden Size:" prefWidth="100" />
                     <ComboBox  fx:id="edenColumnsCombo">
                         <items>
                             <FXCollections fx:factory="observableArrayList">
@@ -38,7 +27,7 @@
                     </ComboBox>
                 </HBox>
                 <HBox>
-                    <Label text="Survivor Size:" />
+                    <Label text="Survivor Size:" prefWidth="100" />
                     <ComboBox  fx:id="survivorColumnsCombo">
                         <items>
                             <FXCollections fx:factory="observableArrayList">
@@ -50,7 +39,7 @@
                     </ComboBox>
                 </HBox>
                 <HBox>
-                    <Label text="Tenured Size:" />
+                    <Label text="Tenured Size:" prefWidth="100" />
                     <ComboBox  fx:id="tenuredColumnsCombo">
                         <items>
                             <FXCollections fx:factory="observableArrayList">

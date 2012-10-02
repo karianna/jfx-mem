@@ -5,6 +5,8 @@
 package com.jclarity.anim.memory;
 
 import javafx.animation.FadeTransition;
+import javafx.animation.RotateTransition;
+import javafx.geometry.Point3D;
 import javafx.util.Duration;
 
 /**
@@ -28,13 +30,21 @@ class CustomMemoryBlockViewTransition implements Runnable {
         fadeOldBlockOut.setAutoReverse(false);
         fadeOldBlockOut.play();
 
-        FadeTransition fadeNewBlockIn = new FadeTransition(Duration.millis(400), view);
+        FadeTransition fadeNewBlockIn = new FadeTransition(Duration.millis(100), view);
         fadeNewBlockIn.setFromValue(0.0);
         fadeNewBlockIn.setToValue(1.0);
         fadeNewBlockIn.setCycleCount(1);
         fadeNewBlockIn.setAutoReverse(false);
         fadeNewBlockIn.setDelay(Duration.millis(1));
         fadeNewBlockIn.play(); 
+        
+        RotateTransition rt = new RotateTransition(Duration.millis(200), view);
+        rt.setAxis(new Point3D(0, 1, 0));
+        rt.setByAngle(360);
+        rt.setCycleCount(0);
+        
+        rt.play();
+        fadeNewBlockIn.play();
     }
     
 }
