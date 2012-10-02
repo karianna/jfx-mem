@@ -32,10 +32,10 @@ public class MemoryController implements Initializable {
     private ComboBox survivorColumnsCombo;
     @FXML
     private ComboBox tenuredColumnsCombo;
-    @FXML
-    private TextField resourcePath;
-    @FXML
-    private ComboBox resourceType;
+//    @FXML
+//    private TextField resourcePath;
+//    @FXML
+//    private ComboBox resourceType;
     @FXML
     private Button beginButton;
     @FXML
@@ -53,7 +53,7 @@ public class MemoryController implements Initializable {
         System.out.println("Eden Size Requested: " + edenColumnsCombo.getSelectionModel().getSelectedItem());
         System.out.println("Survivor Size Requested: " + survivorColumnsCombo.getSelectionModel().getSelectedItem());
         System.out.println("Tenured Size Requested: " + tenuredColumnsCombo.getSelectionModel().getSelectedItem());
-        System.out.println("File Path: " + resourcePath.getText());
+        //System.out.println("File Path: " + resourcePath.getText());
 
 
         //FIXME - This shouldn't need to do a cast as selection model has a generic type. Figure this out in FXML
@@ -75,12 +75,13 @@ public class MemoryController implements Initializable {
         beginButton.setDisable(true);
 
         // FIXME needs some refactoring
-        switch (resourceType.getSelectionModel().getSelectedItem().toString()) {
-            case "File":
-//                 memoryInterpreter = new MemoryInterpreterFileLoader(resourcePath.getText());
-                memoryInterpreter = new SimpleTemporaryMemoryInterpreter();
-                break;
-        }
+//        switch (resourceType.getSelectionModel().getSelectedItem().toString()) {
+//            case "File":
+////                 memoryInterpreter = new MemoryInterpreterFileLoader(resourcePath.getText());
+//                memoryInterpreter = new SimpleTemporaryMemoryInterpreter();
+//                break;
+//        }
+        memoryInterpreter = new SimpleTemporaryMemoryInterpreter();
 //        AllocatingThread at0 = new AllocatingThread(memoryInterpreter, model);
         AllocatingThread at0 = new AllocatingThread(new RandomMemoryInterpreter(0.2), model);
 
@@ -117,7 +118,7 @@ public class MemoryController implements Initializable {
 
     @Override
     public void initialize(URL arg0, ResourceBundle arg1) {
-        resourceType.getSelectionModel().selectFirst();
+        //resourceType.getSelectionModel().selectFirst();
         edenColumnsCombo.getSelectionModel().selectFirst();
         survivorColumnsCombo.getSelectionModel().selectFirst();
         tenuredColumnsCombo.getSelectionModel().selectFirst();
