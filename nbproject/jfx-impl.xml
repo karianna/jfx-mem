@@ -958,7 +958,7 @@
         </pathconvert>
         <!-- add possibly missing dependencies at distance 2 (build system logic thus provides transitive closure) -->
         <local name="run.and.lib.classpath"/>
-        <script language="javascript">
+<!--        <script language="javascript">
             <![CDATA[
                 var pathConvert = project.createTask("pathconvert");
                 pathConvert.setProperty("run.and.lib.classpath");
@@ -998,13 +998,16 @@
                 pathConvert.perform();
             ]]>
         </script>
+        -->
         <echo message="run.and.lib.classpath = ${run.and.lib.classpath}" level="verbose"/>
         <delete dir="${dist.dir}${file.separator}lib" includeEmptyDirs="true" quiet="true"/>
-        <copy todir="${dist.dir}${file.separator}lib" flatten="true" preservelastmodified="true" overwrite="true">
+ <!--
+           <copy todir="${dist.dir}${file.separator}lib" flatten="true" preservelastmodified="true" overwrite="true">
             <path>
                 <pathelement path="${run.and.lib.classpath}"/>
             </path>
         </copy>
+        -->
     </target>
     
     <target name="-copy-external-preloader-jar" depends="-check-project" if="app-with-external-preloader-jar">

@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.jclarity.anim.memory;
 
 import com.jclarity.anim.memory.model.MemoryInstruction;
@@ -13,9 +9,6 @@ import java.util.concurrent.Callable;
  * A class which models a thread which "executes code" and allocates memory. The
  * simulation is designed to potentially have multiple allocating threads
  * running at once.
- *
- * FIXME Some operations are currently multiple-allocation-thread-safe but not
- * all of them yet
  *
  */
 public class AllocatingThread implements Callable<Void> {

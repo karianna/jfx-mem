@@ -83,12 +83,10 @@ public class MemoryController implements Initializable {
 //        }
         memoryInterpreter = new SimpleTemporaryMemoryInterpreter();
 //        AllocatingThread at0 = new AllocatingThread(memoryInterpreter, model);
-        AllocatingThread at0 = new AllocatingThread(new RandomMemoryInterpreter(0.2), model);
+        AllocatingThread at0 = new AllocatingThread(new RandomMemoryInterpreter(0.05), model);
 
         srv.submit(at0);
         AllocatingThread at1 = new AllocatingThread(memoryInterpreter, model);
-        // FIXME Enabling a second allocating thread causes NPE after first YG
-        // collection
         srv.submit(at1);
         
         // Finally, kick off the model in it's own thread

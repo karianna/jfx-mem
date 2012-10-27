@@ -159,6 +159,7 @@ public class MemoryModel implements Runnable {
             allocMax = mb.getBlockId();
             allocList[allocMax] = mb;
 
+            // Walk current TLAB
             for (int i = 0; i < eden.width(); i++) {
                 // Must use getValue() to actually see bindable behaviour
                 MemoryBlockView mbv = eden.getValue(i, threadToCurrentTLAB.get(threadId));
