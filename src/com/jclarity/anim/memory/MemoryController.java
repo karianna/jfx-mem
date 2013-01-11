@@ -22,7 +22,9 @@ public class MemoryController implements Initializable {
 
     // NOTE The survivor spaces are half the height of the Eden & tenured spaces
     private int height = 8;
-    // FIXME Needs to be injected
+    // FIXME This needs to be injected
+    // This must be a singleton, as otherwise we can't guarantee that we're not
+    // allocating the same block in multiple threads.
     private IMemoryInterpreter memoryInterpreter;
     private ExecutorService srv;
     
