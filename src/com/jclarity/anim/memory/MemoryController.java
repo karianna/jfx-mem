@@ -81,13 +81,16 @@ public class MemoryController implements Initializable {
 //                memoryInterpreter = new SimpleTemporaryMemoryInterpreter();
 //                break;
 //        }
-        memoryInterpreter = new SimpleTemporaryMemoryInterpreter();
-//        AllocatingThread at0 = new AllocatingThread(memoryInterpreter, model);
-        AllocatingThread at0 = new AllocatingThread(new RandomMemoryInterpreter(0.05), model);
-
+        //memoryInterpreter = new SimpleTemporaryMemoryInterpreter();
+        memoryInterpreter = new RandomMemoryInterpreter(0.01);
+        AllocatingThread at0 = new AllocatingThread(memoryInterpreter, model);
         srv.submit(at0);
         AllocatingThread at1 = new AllocatingThread(memoryInterpreter, model);
         srv.submit(at1);
+        AllocatingThread at2 = new AllocatingThread(memoryInterpreter, model);
+        srv.submit(at2);
+
+        
         
         // Finally, kick off the model in it's own thread
         srv.submit(model);

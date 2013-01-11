@@ -11,6 +11,11 @@ public class MemoryInstruction {
     private final int p;
     private int threadId;
 
+    @Override
+    public String toString() {
+        return "MemoryInstruction{" + "op=" + op + ", p=" + p + ", threadId=" + threadId + '}';
+    }
+
     public MemoryInstruction(OpCode op_, int p_) {
         op = op_;
         p = p_;

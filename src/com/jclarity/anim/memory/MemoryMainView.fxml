@@ -18,10 +18,10 @@
                     <ComboBox  fx:id="edenColumnsCombo">
                         <items>
                             <FXCollections fx:factory="observableArrayList">
-                                <Integer fx:value="3" />
                                 <Integer fx:value="4" />
                                 <Integer fx:value="5" />
                                 <Integer fx:value="6" />
+                                <Integer fx:value="7" />
                             </FXCollections>
                         </items>
                     </ComboBox>
@@ -31,9 +31,9 @@
                     <ComboBox  fx:id="survivorColumnsCombo">
                         <items>
                             <FXCollections fx:factory="observableArrayList">
-                                <Integer fx:value="4" />
-                                <Integer fx:value="5" />
-                                <Integer fx:value="6" />
+                                <Integer fx:value="1" />
+                                <Integer fx:value="2" />
+                                <Integer fx:value="3" />
                             </FXCollections>
                         </items>
                     </ComboBox>

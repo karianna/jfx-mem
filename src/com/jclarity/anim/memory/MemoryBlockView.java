@@ -47,7 +47,7 @@ public class MemoryBlockView extends StackPane {
         super();
         box = new Rectangle(30, 30, Color.web("white"));
 
-        memoryStatus = new SimpleObjectProperty<>(this, "owner",
+        memoryStatus = new SimpleObjectProperty<MemoryStatus>(this, "owner",
                 MemoryStatus.FREE);
 
         box.styleProperty().bind(Bindings.when(memoryStatus.isEqualTo(MemoryStatus.FREE))

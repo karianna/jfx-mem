@@ -199,9 +199,13 @@ public class MemoryModel implements Runnable {
      */
     void destroy(int id) {
         MemoryBlock mb = allocList[id];
-        if (mb != null && mb.getStatus() == MemoryStatus.ALLOCATED) {
+        if (mb == null) {
+            System.out.println("Null block to be killed: " + id);
+        }
+        if (mb.getStatus() == MemoryStatus.ALLOCATED) {
             mb.die();
-//            System.out.println("Killed " + id);
+        } else {
+            System.out.println("Unexpected status on block "+ id +": " + mb.getStatus());
         }
     }
 
