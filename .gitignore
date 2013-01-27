@@ -6,3 +6,16 @@
 *.ear
 /build/
 /dist/
+
+# Misc eclipse project files
+.classpath
+.project
+.settings/
+ide-bin/
+
+# Netbeans private files
+nbproject/private/private.properties
+
+# Misc Mac files
+.DS_Store
+lib/.DS_Store
