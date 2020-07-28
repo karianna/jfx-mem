@@ -5,6 +5,6 @@ A memory visualisation simulator written in JavaFX.
 
 Working with netbeans and eclipse
 
-run mvn jfx:fix-classpath
+run `mvn javafx:run`
 
 ![JFX-MEM](jfx-mem.png)
