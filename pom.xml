@@ -1,58 +1,58 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.jclarity</groupId>
-	<artifactId>jfx-mem</artifactId>
-	<version>0.0.1</version>
-	<name>jfx-mem</name>
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.jclarity</groupId>
+    <artifactId>jfx-mem</artifactId>
+    <version>0.0.1</version>
+    <name>jfx-mem</name>
 
-	<organization>
-		<name>jclarity</name>
-		<url>com.jclarity</url>
-	</organization>
+    <organization>
+        <name>jclarity</name>
+        <url>com.jclarity</url>
+    </organization>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jdk.version>11</jdk.version>
-		<maven.compiler.source>${jdk.version}</maven.compiler.source>
+        <maven.compiler.source>${jdk.version}</maven.compiler.source>
         <maven.compiler.target>${jdk.version}</maven.compiler.target>
         <maven.compiler.testSource>${jdk.version}</maven.compiler.testSource>
         <maven.compiler.testTarget>${jdk.version}</maven.compiler.testTarget>
 
      </properties>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.openjfx</groupId>
-				<artifactId>javafx-maven-plugin</artifactId>
-				<version>0.0.4</version>
-				<configuration>
-					<source>${jdk.version}</source>
-					<target>${jdk.version}</target>
-					<mainClass>com.jclarity.anim.memory.MemoryMain</mainClass>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.4</version>
+                <configuration>
+                    <source>${jdk.version}</source>
+                    <target>${jdk.version}</target>
+                    <mainClass>com.jclarity.anim.memory.MemoryMain</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
    <dependencies>
-		<dependency>
-    		<groupId>org.openjfx</groupId>
-    		<artifactId>javafx-controls</artifactId>
-    		<version>${jdk.version}</version>
-    	</dependency>
-		<dependency>
-		    <groupId>org.openjfx</groupId>
- 		   <artifactId>javafx-fxml</artifactId>
- 		   <version>${jdk.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.11</version>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${jdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>${jdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
 </project>
