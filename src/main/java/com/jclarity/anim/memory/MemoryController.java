@@ -12,7 +12,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.PaneBuilder;
 
 /**
  *
@@ -99,7 +98,7 @@ public class MemoryController implements Initializable {
     }
 
     public void haltSimulation() {
-        srv.shutdownNow();
+        if (srv != null) srv.shutdownNow();
     }
 
     /**
@@ -114,7 +113,7 @@ public class MemoryController implements Initializable {
         for (int i = 0; i < pool.width(); i++) {
             for (int j = 0; j < pool.height(); j++) {
                 MemoryBlockView block = pool.get(i, j);
-                gridPane.add(PaneBuilder.create().children(block).build(), i, j);
+                gridPane.add(block, i, j);
             }
         }
     }
